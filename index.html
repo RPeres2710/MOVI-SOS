@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movi SOS - Dashboard</title>
+    <!-- Importar Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Nosso CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Movi SOS - Central de Monitoramento</h1>
+        <div class="input-section">
+            <label for="coordinates">Coordenadas (Lat, Lng):</label>
+            <input type="text" id="coordinates" placeholder="-23.5505, -46.6333">
+            <button onclick="updateMap()">Atualizar Mapa</button>
+            <button onclick="searchLocation()">Pesquisar</button>
+        </div>
+        <div class="address-section">
+            <p id="address">Endereço: Aguardando coordenadas...</p>
+        </div>
+        <div class="certificate-section">
+            <p>Certificado de Segurança: Renovado em 18/03/2025 - Expira em 18/06/2025</p>
+        </div>
+        <div id="map"></div>
+        <div class="actions">
+            <h2>Pontos de Apoio Próximos</h2>
+            <div id="support-points"></div>
+            <button onclick="callAction('Hospital')">Acionar Hospital</button>
+            <button onclick="callAction('Polícia')">Acionar Polícia</button>
+            <button onclick="callAction('Bombeiros')">Acionar Bombeiros</button>
+            <button onclick="callAction('Chaveiro')">Acionar Chaveiro</button>
+        </div>
+    </div>
+
+    <!-- Modal Personalizado -->
+    <div id="addressModal" class="modal">
+        <div class="modal-content">
+            <h3>Endereço Específico</h3>
+            <p id="modalAddress">Carregando...</p>
+            <button onclick="closeModal()">Fechar</button>
+        </div>
+    </div>
+
+    <!-- Importar Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Nosso JS -->
+    <script src="script.js"></script>
+</body>
+</html>
