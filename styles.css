@@ -1,225 +1,202 @@
 body {
-    font-family: 'Arial', sans-serif;
+    font-family: Arial, sans-serif;
     margin: 0;
-    padding: 0;
-    background-color: #f0f2f5;
-    color: #333;
+    padding: 20px;
+    background-color: #f5f5f5; /* Fundo claro para contraste */
+    color: #0e1e3f; /* Texto principal em azul-marinho escuro */
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.logo {
+    max-height: 60px; /* Ajuste o tamanho conforme necessário */
+    margin-right: 15px; /* Espaço entre a logo e o título */
 }
 
 h1 {
     text-align: center;
-    color: #003087;
-    font-size: 2.5em;
-    margin-bottom: 20px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-weight: bold; /* Título em negrito */
+    color: #0e1e3f; /* Azul-marinho escuro */
+    margin: 0; /* Remove margem padrão para alinhar com a logo */
 }
 
 .input-section {
-    background-color: #003087;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin: 20px 0;
     display: flex;
-    justify-content: center;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
+    gap: 10px;
 }
 
 .input-section label {
-    color: #fff;
     font-weight: bold;
-    font-size: 1.1em;
+    color: #0e1e3f;
 }
 
 .input-section input {
     padding: 8px;
-    width: 250px;
-    border: 2px solid #800020;
+    border: 2px solid #0e1e3f;
     border-radius: 5px;
-    font-size: 1em;
-    transition: border-color 0.3s;
-}
-
-.input-section input:focus {
-    border-color: #fff;
-    outline: none;
+    font-size: 14px;
 }
 
 .input-section button {
     padding: 10px 20px;
-    background-color: #800020;
-    color: #fff;
+    background-color: #0e1e3f; /* Botões azul-marinho */
+    color: white;
     border: none;
     border-radius: 5px;
-    font-size: 1em;
     cursor: pointer;
+    font-weight: bold;
     transition: background-color 0.3s;
 }
 
 .input-section button:hover {
-    background-color: #a00028;
-}
-
-.input-section button:nth-child(3) { /* Botão "Pesquisar" */
-    background-color: #003087;
-}
-
-.input-section button:nth-child(3):hover {
-    background-color: #0044b3;
+    background-color: #66252d; /* Vinho escuro no hover */
 }
 
 .address-section {
-    text-align: center;
-    background-color: #fff;
+    position: relative; /* Define um contexto de posicionamento */
+    z-index: 10; /* Garante que fique acima do mapa */
+    background-color: #fff; /* Fundo branco para visibilidade */
     padding: 10px;
-    border: 2px solid #800020;
     border-radius: 5px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 5px rgba(14, 30, 63, 0.1); /* Sombra suave */
+    margin-bottom: 10px;
 }
 
 .address-section p {
-    margin: 0;
-    color: #003087;
-    font-weight: bold;
-    font-size: 1em;
-}
-
-.certificate-section {
-    text-align: center;
-    background-color: #fff;
-    padding: 10px;
-    border: 2px solid #003087;
-    border-radius: 5px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+    color: #0e1e3f;
+    margin: 0; /* Remove margens internas padrão */
 }
 
 .certificate-section p {
-    margin: 0;
-    color: #800020;
-    font-weight: bold;
-    font-size: 1em;
+    font-size: 14px;
+    color: #66252d; /* Vinho escuro para o certificado */
+    text-align: center;
+    margin: 10px 0;
 }
 
 #map {
-    height: 500px;
+    height: 400px;
     width: 100%;
-    border: 3px solid #003087;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 30px;
-    position: relative; /* Garante que o mapa fique na camada base */
-    z-index: 1; /* Define um z-index baixo para o mapa */
+    margin: 20px 0;
+    border: 2px solid #0e1e3f; /* Borda azul-marinho */
+    border-radius: 5px;
+    position: relative; /* Garante que o mapa respeite o z-index */
+    z-index: 1; /* Menor que o address-section */
 }
 
 .actions {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
 
 .actions h2 {
-    color: #003087;
-    font-size: 1.8em;
+    font-weight: bold;
+    color: #0e1e3f; /* Título em azul-marinho escuro */
     margin-bottom: 15px;
 }
 
-.actions h3 {
-    color: #800020;
-    font-size: 1.3em;
-    margin: 10px 0;
+.support-points-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    background-color: #fff; /* Fundo branco para as colunas */
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(14, 30, 63, 0.1); /* Sombra suave com azul-marinho */
 }
 
-.actions p {
-    color: #333;
-    font-size: 1em;
+.support-column {
+    flex: 1;
+    margin: 0 10px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.support-column h3 {
+    margin: 0 0 10px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #66252d; /* Títulos das colunas em vinho escuro */
+    text-align: center;
+}
+
+.support-column p {
     margin: 5px 0;
+    font-size: 14px;
+    color: #0e1e3f; /* Texto das colunas em azul-marinho */
 }
 
 .actions button {
-    padding: 12px 25px;
-    margin: 8px;
-    background-color: #003087;
-    color: #fff;
+    margin: 5px;
+    padding: 10px 20px;
+    background-color: #0e1e3f; /* Botões azul-marinho */
+    color: white;
     border: none;
     border-radius: 5px;
-    font-size: 1em;
     cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
+    font-weight: bold;
+    transition: background-color 0.3s;
 }
 
 .actions button:hover {
-    background-color: #0044b3;
-    transform: scale(1.05);
+    background-color: #66252d; /* Vinho escuro no hover */
 }
 
-.actions button:nth-child(2) { /* Acionar Polícia */
-    background-color: #800020;
-}
-
-.actions button:nth-child(2):hover {
-    background-color: #a00028;
-}
-
-/* Estilos do Modal */
 .modal {
-    display: none; /* Escondido por padrão */
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Fundo escuro translúcido */
+    background-color: rgba(14, 30, 63, 0.5); /* Fundo do modal com azul-marinho translúcido */
     justify-content: center;
     align-items: center;
-    z-index: 1000; /* Z-index alto para ficar acima do mapa */
+    z-index: 100; /* Modal acima de tudo */
 }
 
 .modal-content {
-    background-color: #fff;
+    background-color: white;
     padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    width: 400px;
-    max-width: 90%;
+    border-radius: 5px;
     text-align: center;
-    border: 3px solid #003087; /* Borda azul escuro */
+    border: 2px solid #0e1e3f; /* Borda azul-marinho */
 }
 
 .modal-content h3 {
-    color: #003087; /* Azul escuro */
-    margin-bottom: 15px;
-    font-size: 1.5em;
+    font-weight: bold;
+    color: #0e1e3f; /* Título do modal em azul-marinho */
+    margin-bottom: 10px;
 }
 
 .modal-content p {
-    color: #333;
-    font-size: 1.1em;
-    margin-bottom: 20px;
-    word-wrap: break-word; /* Quebra de linha para endereços longos */
+    color: #66252d; /* Texto do modal em vinho escuro */
+    margin-bottom: 15px;
 }
 
 .modal-content button {
-    padding: 10px 20px;
-    background-color: #800020; /* Vermelho escuro */
-    color: #fff;
+    padding: 8px 16px;
+    background-color: #0e1e3f; /* Botão do modal azul-marinho */
+    color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    font-weight: bold;
     transition: background-color 0.3s;
 }
 
 .modal-content button:hover {
-    background-color: #a00028;
+    background-color: #66252d; /* Vinho escuro no hover */
 }
