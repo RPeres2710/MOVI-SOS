@@ -74,6 +74,11 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
     return R * c; // Distância em metros
 }
 
+// Função para adicionar um atraso (em milissegundos)
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // Função para atualizar o mapa com as coordenadas inseridas
 async function updateMap() {
     const coordsInput = document.getElementById('coordinates').value;
@@ -99,7 +104,7 @@ async function updateMap() {
     marker = L.marker([lat, lng], { icon: locationIcon })
         .addTo(map)
         .bindPopup("Ponto de Acionamento");
-    map.setView([lat, lng], 13);
+    map.setView([lat, lng], 15); // Aumentei o zoom para melhor visualização em 1 km
 
     // Atualizar lista de pontos de apoio reais
     await fetchSupportPoints(lat, lng);
@@ -117,18 +122,29 @@ async function fetchSupportPoints(lat, lng) {
         { key: 'locksmith', label: 'Chaveiro', icon: locksmithIcon, fallbackPhone: '+5511777777777', divId: 'locksmith-points' }
     ];
 
+    // Dados mockados como fallback
+    const mockData = {
+        hospital: [{ lat: lat + 0.005, lon: lng + 0.005, tags: { name: "Hospital Mock", phone: "+5511999999999" } }],
+        police: [{ lat: lat + 0.006, lon: lng + 0.006, tags: { name: "Polícia Mock", phone: "+5511888888888" } }],
+        fire_station: [{ lat: lat + 0.007, lon: lng + 0.007, tags: { name: "Bombeiros Mock", phone: "+551193" } }],
+        locksmith: [{ lat: lat + 0.008, lon: lng + 0.008, tags: { name: "Chaveiro Mock", phone: "+5511777777777" } }]
+    };
+
     for (const type of supportTypes) {
         const supportPointsDiv = document.getElementById(type.divId);
         supportPointsDiv.innerHTML = `<h3>${type.label}</h3>`; // Reseta com o título
 
         const query = `
             [out:json];
-            node["${type.key === 'locksmith' ? 'shop' : 'amenity'}"="${type.key}"](around:5000,${lat},${lng});
+            node["${type.key === 'locksmith' ? 'shop' : 'amenity'}"="${type.key}"](around:1000,${lat},${lng});
             out body;
         `;
         const url = `https://cors-anywhere.herokuapp.com/http://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
         try {
+            // Adicionar atraso para evitar bloqueio do CORS Anywhere
+            await delay(2000); // 2 segundos de atraso entre requisições
+
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
@@ -136,20 +152,33 @@ async function fetchSupportPoints(lat, lng) {
             const data = await response.json();
             console.log(`Dados recebidos para ${type.label}:`, data); // Log detalhado
 
-            if (!data.elements || data.elements.length === 0) {
+            let elements = data.elements;
+
+            // Se não houver dados, usar mock como fallback
+            if (!elements || elements.length === 0) {
+                console.warn(`Nenhum dado real encontrado para ${type.label}. Usando dados mockados.`);
+                elements = mockData[type.key];
+            }
+
+            if (!elements || elements.length === 0) {
                 const point = document.createElement('p');
-                point.textContent = `Nenhum ${type.label} encontrado nas proximidades`;
+                point.textContent = `Nenhum ${type.label} encontrado em 1 km`;
                 supportPointsDiv.appendChild(point);
             } else {
                 let nearestPoint = null;
                 let minDistance = Infinity;
 
-                for (const node of data.elements) {
-                    const name = node.tags && node.tags.name ? node.tags.name : `Sem nome (${type.label})`;
+                // Filtrar apenas pontos dentro de 1 km e encontrar o mais próximo
+                for (const node of elements) {
                     const pointLat = node.lat;
                     const pointLng = node.lon;
-                    const phone = node.tags && (node.tags.phone || node.tags['contact:phone']) || type.fallbackPhone;
                     const distance = calculateDistance(lat, lng, pointLat, pointLng);
+
+                    // Ignorar pontos fora do raio de 1 km
+                    if (distance > 1000) continue;
+
+                    const name = node.tags && node.tags.name ? node.tags.name : `Sem nome (${type.label})`;
+                    const phone = node.tags && (node.tags.phone || node.tags['contact:phone']) || type.fallbackPhone;
 
                     // Buscar endereço via Nominatim para este ponto
                     let address = "Endereço não disponível";
@@ -166,34 +195,35 @@ async function fetchSupportPoints(lat, lng) {
                         address = `Erro ao buscar endereço: ${error.message}`;
                     }
 
-                    // Criar o conteúdo do popup com nome, endereço e telefone
+                    // Verificar se é o mais próximo
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearestPoint = { name, phone, address, lat: pointLat, lng: pointLng };
+                    }
+                }
+
+                // Se encontrou um ponto dentro de 1 km, exibir
+                if (nearestPoint) {
                     const popupContent = `
-                        <b>${type.label}: ${name}</b><br>
-                        Endereço: ${address}<br>
-                        Telefone: ${phone}
+                        <b>${type.label}: ${nearestPoint.name}</b><br>
+                        Endereço: ${nearestPoint.address}<br>
+                        Telefone: ${nearestPoint.phone}
                     `;
 
-                    // Adicionar marcador no mapa com popup personalizado
-                    const supportMarker = L.marker([pointLat, pointLng], { icon: type.icon })
+                    const supportMarker = L.marker([nearestPoint.lat, nearestPoint.lng], { icon: type.icon })
                         .addTo(map)
                         .bindPopup(popupContent);
                     supportMarkers.push(supportMarker);
 
-                    // Adicionar na coluna correspondente
                     const point = document.createElement('p');
-                    point.textContent = `${name} (${(distance / 1000).toFixed(2)} km)`;
+                    point.textContent = `${nearestPoint.name} (${(minDistance / 1000).toFixed(2)} km)${elements === mockData[type.key] ? ' [Mock]' : ''}`;
                     supportPointsDiv.appendChild(point);
 
-                    // Verificar se é o mais próximo
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        nearestPoint = { name, phone, address };
-                    }
-                }
-
-                // Armazenar o ponto mais próximo para o tipo
-                if (nearestPoint) {
                     nearestSupportPoints[type.label] = nearestPoint;
+                } else {
+                    const point = document.createElement('p');
+                    point.textContent = `Nenhum ${type.label} encontrado em 1 km`;
+                    supportPointsDiv.appendChild(point);
                 }
             }
         } catch (error) {
@@ -201,6 +231,52 @@ async function fetchSupportPoints(lat, lng) {
             const point = document.createElement('p');
             point.textContent = `Erro ao buscar ${type.label}: ${error.message}`;
             supportPointsDiv.appendChild(point);
+
+            // Usar dados mockados como fallback
+            console.warn(`Usando dados mockados para ${type.label} devido ao erro.`);
+            const mockElements = mockData[type.key];
+            let nearestPoint = null;
+            let minDistance = Infinity;
+
+            for (const node of mockElements) {
+                const pointLat = node.lat;
+                const pointLng = node.lon;
+                const distance = calculateDistance(lat, lng, pointLat, pointLng);
+
+                // Ignorar pontos fora do raio de 1 km
+                if (distance > 1000) continue;
+
+                const name = node.tags.name;
+                const phone = node.tags.phone;
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestPoint = { name, phone, address: "Endereço mockado", lat: pointLat, lng: pointLng };
+                }
+            }
+
+            if (nearestPoint) {
+                const popupContent = `
+                    <b>${type.label}: ${nearestPoint.name}</b><br>
+                    Endereço: ${nearestPoint.address}<br>
+                    Telefone: ${nearestPoint.phone}
+                `;
+
+                const supportMarker = L.marker([nearestPoint.lat, nearestPoint.lng], { icon: type.icon })
+                    .addTo(map)
+                    .bindPopup(popupContent);
+                supportMarkers.push(supportMarker);
+
+                const point = document.createElement('p');
+                point.textContent = `${nearestPoint.name} (${(minDistance / 1000).toFixed(2)} km) [Mock]`;
+                supportPointsDiv.appendChild(point);
+
+                nearestSupportPoints[type.label] = nearestPoint;
+            } else {
+                const point = document.createElement('p');
+                point.textContent = `Nenhum ${type.label} encontrado em 1 km [Mock]`;
+                supportPointsDiv.appendChild(point);
+            }
         }
     }
 
@@ -250,7 +326,7 @@ async function searchLocation() {
     marker = L.marker([lat, lng], { icon: locationIcon })
         .addTo(map)
         .bindPopup("Ponto de Acionamento");
-    map.setView([lat, lng], 13);
+    map.setView([lat, lng], 15); // Aumentei o zoom para melhor visualização em 1 km
 
     // Atualizar lista de pontos de apoio reais
     await fetchSupportPoints(lat, lng);
