@@ -6,21 +6,73 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 // Marcador para o ponto de acionamento
 let marker = null;
+// Lista para armazenar marcadores de pontos de apoio
+let supportMarkers = [];
+// Objeto para armazenar os pontos mais próximos com números de contato
+let nearestSupportPoints = {};
 
-// Lista fictícia de pontos de apoio
-const supportPoints = [
-    { type: "Hospital", name: "Hospital São Luiz", lat: -23.5678, lng: -46.6455, contact: "tel:+5511999999999" },
-    { type: "Polícia", name: "5ª Delegacia", lat: -23.5550, lng: -46.6300, contact: "tel:+551188888888" },
-    { type: "Bombeiros", name: "Corpo de Bombeiros", lat: -23.5600, lng: -46.6400, contact: "tel:+551193" },
-    { type: "Chaveiro", name: "Chaveiro 24h", lat: -23.5480, lng: -46.6350, contact: "tel:+551177777777" }
-];
-
-// Adicionar pontos de apoio ao mapa
-supportPoints.forEach(point => {
-    L.marker([point.lat, point.lng])
-        .addTo(map)
-        .bindPopup(`${point.type}: ${point.name}`);
+// Definir ícone personalizado para o Ponto de Acionamento (amarelo)
+const locationIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    shadowSize: [41, 41]
 });
+
+// Definir ícones personalizados para cada tipo de ponto de apoio
+const policeIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    shadowSize: [41, 41]
+});
+
+const fireIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    shadowSize: [41, 41]
+});
+
+const hospitalIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    shadowSize: [41, 41]
+});
+
+const locksmithIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    shadowSize: [41, 41]
+});
+
+// Função para calcular a distância entre dois pontos (em metros)
+function calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371e3; // Raio da Terra em metros
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lng2 - lng1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distância em metros
+}
 
 // Função para atualizar o mapa com as coordenadas inseridas
 async function updateMap() {
@@ -38,16 +90,132 @@ async function updateMap() {
     if (marker) {
         map.removeLayer(marker);
     }
+    // Remover marcadores de pontos de apoio anteriores
+    supportMarkers.forEach(m => map.removeLayer(m));
+    supportMarkers = [];
+    nearestSupportPoints = {}; // Resetar pontos mais próximos
 
-    // Adicionar novo marcador e centralizar
-    marker = L.marker([lat, lng]).addTo(map).bindPopup("Ponto de Acionamento");
+    // Adicionar novo marcador com ícone amarelo e centralizar
+    marker = L.marker([lat, lng], { icon: locationIcon })
+        .addTo(map)
+        .bindPopup("Ponto de Acionamento");
     map.setView([lat, lng], 13);
 
-    // Atualizar lista de pontos de apoio próximos
-    updateSupportPoints(lat, lng);
+    // Atualizar lista de pontos de apoio reais
+    await fetchSupportPoints(lat, lng);
 
     // Buscar o endereço via Nominatim
     await fetchAddress(lat, lng);
+}
+
+// Função para buscar pontos de apoio reais com Overpass API
+async function fetchSupportPoints(lat, lng) {
+    const supportTypes = [
+        { key: 'hospital', label: 'Hospital', icon: hospitalIcon, fallbackPhone: '+5511999999999', divId: 'hospital-points' },
+        { key: 'police', label: 'Polícia', icon: policeIcon, fallbackPhone: '+5511888888888', divId: 'police-points' },
+        { key: 'fire_station', label: 'Bombeiros', icon: fireIcon, fallbackPhone: '+551193', divId: 'fire-points' },
+        { key: 'locksmith', label: 'Chaveiro', icon: locksmithIcon, fallbackPhone: '+5511777777777', divId: 'locksmith-points' }
+    ];
+
+    for (const type of supportTypes) {
+        const supportPointsDiv = document.getElementById(type.divId);
+        supportPointsDiv.innerHTML = `<h3>${type.label}</h3>`; // Reseta com o título
+
+        const query = `
+            [out:json];
+            node["${type.key === 'locksmith' ? 'shop' : 'amenity'}"="${type.key}"](around:5000,${lat},${lng});
+            out;
+        `;
+        const url = `http://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.elements.length === 0) {
+                const point = document.createElement('p');
+                point.textContent = `Nenhum encontrado nas proximidades`;
+                supportPointsDiv.appendChild(point);
+            } else {
+                let nearestPoint = null;
+                let minDistance = Infinity;
+
+                for (const node of data.elements) {
+                    const name = node.tags.name || `Sem nome (${type.label})`;
+                    const pointLat = node.lat;
+                    const pointLng = node.lon;
+                    const phone = node.tags.phone || node.tags['contact:phone'] || type.fallbackPhone;
+                    const distance = calculateDistance(lat, lng, pointLat, pointLng);
+
+                    // Buscar endereço via Nominatim para este ponto
+                    let address = "Endereço não disponível";
+                    try {
+                        const addressResponse = await fetch(
+                            `https://nominatim.openstreetmap.org/reverse?lat=${pointLat}&lon=${pointLng}&format=json&addressdetails=1`,
+                            { headers: { 'User-Agent': 'MoviSOS-Dashboard/1.0' } }
+                        );
+                        const addressData = await addressResponse.json();
+                        address = formatAddress(addressData.address);
+                    } catch (error) {
+                        console.error(`Erro ao buscar endereço para ${name}:`, error);
+                    }
+
+                    // Criar o conteúdo do popup com nome, endereço e telefone
+                    const popupContent = `
+                        <b>${type.label}: ${name}</b><br>
+                        Endereço: ${address}<br>
+                        Telefone: ${phone}
+                    `;
+
+                    // Adicionar marcador no mapa com popup personalizado
+                    const supportMarker = L.marker([pointLat, pointLng], { icon: type.icon })
+                        .addTo(map)
+                        .bindPopup(popupContent);
+                    supportMarkers.push(supportMarker);
+
+                    // Adicionar na coluna correspondente
+                    const point = document.createElement('p');
+                    point.textContent = `${name} (${(distance / 1000).toFixed(2)} km)`;
+                    supportPointsDiv.appendChild(point);
+
+                    // Verificar se é o mais próximo
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearestPoint = { name, phone, address };
+                    }
+                }
+
+                // Armazenar o ponto mais próximo para o tipo
+                if (nearestPoint) {
+                    nearestSupportPoints[type.label] = nearestPoint;
+                }
+            }
+        } catch (error) {
+            console.error(`Erro ao buscar ${type.label}:`, error);
+            const point = document.createElement('p');
+            point.textContent = `Erro ao buscar`;
+            supportPointsDiv.appendChild(point);
+        }
+    }
+
+    // Garantir que o mapa seja renderizado após adicionar marcadores
+    map.invalidateSize();
+}
+
+// Função para buscar o endereço via Nominatim
+async function fetchAddress(lat, lng) {
+    const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`;
+    try {
+        const response = await fetch(url, {
+            headers: { 'User-Agent': 'MoviSOS-Dashboard/1.0' }
+        });
+        const data = await response.json();
+        const formattedAddress = formatAddress(data.address);
+        document.getElementById('address').textContent = `Endereço: ${formattedAddress}`;
+    } catch (error) {
+        document.getElementById('address').textContent = "Endereço: Erro ao buscar endereço";
+        console.error("Erro na geocodificação:", error);
+    }
 }
 
 // Função para pesquisar localização e exibir modal
@@ -66,13 +234,19 @@ async function searchLocation() {
     if (marker) {
         map.removeLayer(marker);
     }
+    // Remover marcadores de pontos de apoio anteriores
+    supportMarkers.forEach(m => map.removeLayer(m));
+    supportMarkers = [];
+    nearestSupportPoints = {};
 
-    // Adicionar novo marcador e centralizar
-    marker = L.marker([lat, lng]).addTo(map).bindPopup("Ponto de Acionamento");
+    // Adicionar novo marcador com ícone amarelo e centralizar
+    marker = L.marker([lat, lng], { icon: locationIcon })
+        .addTo(map)
+        .bindPopup("Ponto de Acionamento");
     map.setView([lat, lng], 13);
 
-    // Atualizar lista de pontos de apoio próximos
-    updateSupportPoints(lat, lng);
+    // Atualizar lista de pontos de apoio reais
+    await fetchSupportPoints(lat, lng);
 
     // Buscar o endereço via Nominatim e exibir no modal
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`;
@@ -93,66 +267,31 @@ async function searchLocation() {
     }
 }
 
+// Função para formatar o endereço retornado pelo Nominatim
+function formatAddress(address) {
+    const parts = [];
+    if (address.road) parts.push(address.road);
+    if (address.neighbourhood) parts.push(address.neighbourhood);
+    if (address.suburb) parts.push(address.suburb);
+    if (address.city) parts.push(address.city);
+    if (address.state) parts.push(address.state);
+    if (address.postcode) parts.push(address.postcode);
+    return parts.join(', ') || "Endereço não detalhado";
+}
+
 // Função para fechar o modal
 function closeModal() {
     document.getElementById('addressModal').style.display = 'none';
 }
 
-// Função para formatar o endereço
-function formatAddress(addressData) {
-    const road = addressData.road || "Rua não especificada";
-    const houseNumber = addressData.house_number || "S/N";
-    const city = addressData.city || addressData.town || addressData.village || "Cidade não especificada";
-    const state = addressData.state || "Estado não especificado";
-    const postcode = addressData.postcode || "CEP não especificado";
-    return `${road}, ${houseNumber}, ${city}, ${state}, ${postcode}`;
-}
-
-// Função para buscar o endereço usando Nominatim (usada pelo "Atualizar Mapa")
-async function fetchAddress(lat, lng) {
-    const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`;
-    try {
-        const response = await fetch(url, {
-            headers: { 'User-Agent': 'MoviSOS-Dashboard/1.0' }
-        });
-        const data = await response.json();
-        const formattedAddress = formatAddress(data.address);
-        document.getElementById('address').textContent = `Endereço: ${formattedAddress}`;
-    } catch (error) {
-        document.getElementById('address').textContent = "Endereço: Erro ao buscar endereço";
-        console.error("Erro na geocodificação:", error);
-    }
-}
-
-// Função para calcular distância (fórmula de Haversine simplificada)
-function calculateDistance(lat1, lng1, lat2, lng2) {
-    const R = 6371; // Raio da Terra em km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c; // Distância em km
-}
-
-// Atualizar lista de pontos de apoio
-function updateSupportPoints(lat, lng) {
-    const supportDiv = document.getElementById('support-points');
-    supportDiv.innerHTML = "<h3>Pontos Próximos:</h3>";
-    supportPoints.forEach(point => {
-        const distance = calculateDistance(lat, lng, point.lat, point.lng).toFixed(2);
-        supportDiv.innerHTML += `<p>${point.type}: ${point.name} - ${distance} km</p>`;
-    });
-}
-
-// Função para os botões de acionamento/ligação
+// Função para os botões de ação abrir o WhatsApp
 function callAction(type) {
-    const point = supportPoints.find(p => p.type === type);
-    if (point) {
-        window.location.href = point.contact; // Abre o discador do dispositivo
-        alert(`Acionando ${type} em ${point.name}`);
+    const point = nearestSupportPoints[type];
+    if (point && point.phone) {
+        const cleanPhone = point.phone.replace(/\D/g, '');
+        const whatsappUrl = `https://wa.me/${cleanPhone.startsWith('55') ? cleanPhone : '55' + cleanPhone}`;
+        window.open(whatsappUrl, '_blank');
     } else {
-        alert(`Nenhum ${type} configurado ainda!`);
+        alert(`Nenhum ${type} com número de contato encontrado nas proximidades.`);
     }
 }
