@@ -27,7 +27,20 @@
         <div id="map"></div>
         <div class="actions">
             <h2>Pontos de Apoio Próximos</h2>
-            <div id="support-points"></div>
+            <div class="support-points-container">
+                <div id="hospital-points" class="support-column">
+                    <h3>Hospitais</h3>
+                </div>
+                <div id="police-points" class="support-column">
+                    <h3>Polícia</h3>
+                </div>
+                <div id="fire-points" class="support-column">
+                    <h3>Bombeiros</h3>
+                </div>
+                <div id="locksmith-points" class="support-column">
+                    <h3>Chaveiros</h3>
+                </div>
+            </div>
             <button onclick="callAction('Hospital')">Acionar Hospital</button>
             <button onclick="callAction('Polícia')">Acionar Polícia</button>
             <button onclick="callAction('Bombeiros')">Acionar Bombeiros</button>
