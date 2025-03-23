@@ -124,16 +124,17 @@ async function fetchSupportPoints(lat, lng) {
         const query = `
             [out:json];
             node["${type.key === 'locksmith' ? 'shop' : 'amenity'}"="${type.key}"](around:5000,${lat},${lng});
-            out;
+            out body;
         `;
-        // Usando proxy CORS Anywhere
         const url = `https://cors-anywhere.herokuapp.com/http://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
         try {
             const response = await fetch(url);
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
+            }
             const data = await response.json();
-            console.log(`Dados recebidos para ${type.label}:`, data.elements); // Log para depuração
+            console.log(`Dados recebidos para ${type.label}:`, data); // Log detalhado
 
             if (!data.elements || data.elements.length === 0) {
                 const point = document.createElement('p');
@@ -162,7 +163,7 @@ async function fetchSupportPoints(lat, lng) {
                         address = formatAddress(addressData.address);
                     } catch (error) {
                         console.error(`Erro ao buscar endereço para ${name}:`, error.message);
-                        address = "Erro ao buscar endereço";
+                        address = `Erro ao buscar endereço: ${error.message}`;
                     }
 
                     // Criar o conteúdo do popup com nome, endereço e telefone
@@ -214,7 +215,7 @@ async function fetchAddress(lat, lng) {
         const response = await fetch(url, {
             headers: { 'User-Agent': 'MoviSOS-Dashboard/1.0' }
         });
-        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+        if (!response.ok) throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
         const data = await response.json();
         const formattedAddress = formatAddress(data.address);
         document.getElementById('address').textContent = `Endereço: ${formattedAddress}`;
@@ -260,7 +261,7 @@ async function searchLocation() {
         const response = await fetch(url, {
             headers: { 'User-Agent': 'MoviSOS-Dashboard/1.0' }
         });
-        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+        if (!response.ok) throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
         const data = await response.json();
         const formattedAddress = formatAddress(data.address);
         document.getElementById('modalAddress').textContent = formattedAddress;
