@@ -143,7 +143,7 @@ async function fetchSupportPoints(lat, lng) {
 
         try {
             // Adicionar atraso para evitar bloqueio do CORS Anywhere
-            await delay(2000); // 2 segundos de atraso entre requisições
+            await delay(3000); // 3 segundos de atraso entre requisições
 
             const response = await fetch(url);
             if (!response.ok) {
@@ -180,20 +180,8 @@ async function fetchSupportPoints(lat, lng) {
                     const name = node.tags && node.tags.name ? node.tags.name : `Sem nome (${type.label})`;
                     const phone = node.tags && (node.tags.phone || node.tags['contact:phone']) || type.fallbackPhone;
 
-                    // Buscar endereço via Nominatim para este ponto
-                    let address = "Endereço não disponível";
-                    try {
-                        const addressResponse = await fetch(
-                            `https://cors-anywhere.herokuapp.com/https://nominatim.openstreetmap.org/reverse?lat=${pointLat}&lon=${pointLng}&format=json&addressdetails=1`,
-                            { headers: { 'User-Agent': 'MoviSOS-Dashboard/1.0' } }
-                        );
-                        if (!addressResponse.ok) throw new Error(`Erro HTTP: ${addressResponse.status}`);
-                        const addressData = await addressResponse.json();
-                        address = formatAddress(addressData.address);
-                    } catch (error) {
-                        console.error(`Erro ao buscar endereço para ${name}:`, error.message);
-                        address = `Erro ao buscar endereço: ${error.message}`;
-                    }
+                    // Usar endereço mockado para reduzir requisições ao Nominatim
+                    const address = elements === mockData[type.key] ? "Endereço mockado" : "Endereço não buscado (limite de requisições)";
 
                     // Verificar se é o mais próximo
                     if (distance < minDistance) {
@@ -288,6 +276,7 @@ async function fetchSupportPoints(lat, lng) {
 async function fetchAddress(lat, lng) {
     const url = `https://cors-anywhere.herokuapp.com/https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`;
     try {
+        await delay(3000); // Atraso para evitar erro 429
         const response = await fetch(url, {
             headers: { 'User-Agent': 'MoviSOS-Dashboard/1.0' }
         });
@@ -334,6 +323,7 @@ async function searchLocation() {
     // Buscar o endereço via Nominatim e exibir no modal
     const url = `https://cors-anywhere.herokuapp.com/https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`;
     try {
+        await delay(3000); // Atraso para evitar erro 429
         const response = await fetch(url, {
             headers: { 'User-Agent': 'MoviSOS-Dashboard/1.0' }
         });
