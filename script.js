@@ -126,26 +126,28 @@ async function fetchSupportPoints(lat, lng) {
             node["${type.key === 'locksmith' ? 'shop' : 'amenity'}"="${type.key}"](around:5000,${lat},${lng});
             out;
         `;
+        // Usando proxy CORS Anywhere
         const url = `https://cors-anywhere.herokuapp.com/http://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
         try {
             const response = await fetch(url);
+            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
             const data = await response.json();
-            console.log(`Resultados para ${type.label}:`, data.elements); // Log para depuração
+            console.log(`Dados recebidos para ${type.label}:`, data.elements); // Log para depuração
 
             if (!data.elements || data.elements.length === 0) {
                 const point = document.createElement('p');
-                point.textContent = `Nenhum encontrado nas proximidades`;
+                point.textContent = `Nenhum ${type.label} encontrado nas proximidades`;
                 supportPointsDiv.appendChild(point);
             } else {
                 let nearestPoint = null;
                 let minDistance = Infinity;
 
                 for (const node of data.elements) {
-                    const name = node.tags.name || `Sem nome (${type.label})`;
+                    const name = node.tags && node.tags.name ? node.tags.name : `Sem nome (${type.label})`;
                     const pointLat = node.lat;
                     const pointLng = node.lon;
-                    const phone = node.tags.phone || node.tags['contact:phone'] || type.fallbackPhone;
+                    const phone = node.tags && (node.tags.phone || node.tags['contact:phone']) || type.fallbackPhone;
                     const distance = calculateDistance(lat, lng, pointLat, pointLng);
 
                     // Buscar endereço via Nominatim para este ponto
@@ -155,10 +157,12 @@ async function fetchSupportPoints(lat, lng) {
                             `https://cors-anywhere.herokuapp.com/https://nominatim.openstreetmap.org/reverse?lat=${pointLat}&lon=${pointLng}&format=json&addressdetails=1`,
                             { headers: { 'User-Agent': 'MoviSOS-Dashboard/1.0' } }
                         );
+                        if (!addressResponse.ok) throw new Error(`Erro HTTP: ${addressResponse.status}`);
                         const addressData = await addressResponse.json();
                         address = formatAddress(addressData.address);
                     } catch (error) {
                         console.error(`Erro ao buscar endereço para ${name}:`, error.message);
+                        address = "Erro ao buscar endereço";
                     }
 
                     // Criar o conteúdo do popup com nome, endereço e telefone
@@ -194,7 +198,7 @@ async function fetchSupportPoints(lat, lng) {
         } catch (error) {
             console.error(`Erro ao buscar ${type.label}:`, error.message); // Log detalhado
             const point = document.createElement('p');
-            point.textContent = `Erro ao buscar: ${error.message}`;
+            point.textContent = `Erro ao buscar ${type.label}: ${error.message}`;
             supportPointsDiv.appendChild(point);
         }
     }
@@ -210,12 +214,13 @@ async function fetchAddress(lat, lng) {
         const response = await fetch(url, {
             headers: { 'User-Agent': 'MoviSOS-Dashboard/1.0' }
         });
+        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
         const data = await response.json();
         const formattedAddress = formatAddress(data.address);
         document.getElementById('address').textContent = `Endereço: ${formattedAddress}`;
     } catch (error) {
-        document.getElementById('address').textContent = "Endereço: Erro ao buscar endereço";
         console.error("Erro na geocodificação:", error.message);
+        document.getElementById('address').textContent = `Endereço: Erro ao buscar - ${error.message}`;
     }
 }
 
@@ -255,16 +260,17 @@ async function searchLocation() {
         const response = await fetch(url, {
             headers: { 'User-Agent': 'MoviSOS-Dashboard/1.0' }
         });
+        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
         const data = await response.json();
         const formattedAddress = formatAddress(data.address);
         document.getElementById('modalAddress').textContent = formattedAddress;
         document.getElementById('address').textContent = `Endereço: ${formattedAddress}`;
         document.getElementById('addressModal').style.display = 'flex'; // Exibe o modal
     } catch (error) {
-        document.getElementById('modalAddress').textContent = "Erro ao buscar endereço";
-        document.getElementById('address').textContent = "Endereço: Erro ao buscar endereço";
-        document.getElementById('addressModal').style.display = 'flex';
         console.error("Erro na geocodificação:", error.message);
+        document.getElementById('modalAddress').textContent = `Erro ao buscar endereço: ${error.message}`;
+        document.getElementById('address').textContent = `Endereço: Erro ao buscar - ${error.message}`;
+        document.getElementById('addressModal').style.display = 'flex';
     }
 }
 
