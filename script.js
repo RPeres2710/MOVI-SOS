@@ -1,5 +1,5 @@
 // Inicializar o mapa com Leaflet
-let map = L.map('map').setView([-22.92040719948446, 43.1], 13); // Coordenadas iniciais e zoom
+let map = L.map('map').setView([-22.92048625354668, -43.17458379592426], 13); // Coordenadas iniciais e zoom
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
@@ -64,13 +64,18 @@ async function fetchNearbyPlaces(lat, lng, type, tag) {
 
 // Função para buscar e exibir a localização
 async function searchLocation() {
-    const lat = parseFloat(document.getElementById('lat').value);
-    const lng = parseFloat(document.getElementById('lng').value);
-
-    if (isNaN(lat) || isNaN(lng)) {
-        alert('Por favor, insira coordenadas válidas.');
+    const coordsInput = document.getElementById('coords').value.trim();
+    
+    // Separar as coordenadas (esperado: "latitude, longitude")
+    const coords = coordsInput.split(',').map(coord => parseFloat(coord.trim()));
+    
+    if (coords.length !== 2 || isNaN(coords[0]) || isNaN(coords[1])) {
+        alert('Por favor, insira coordenadas válidas no formato: latitude, longitude (ex.: -22.92048625354668, -43.17458379592426)');
         return;
     }
+
+    const lat = coords[0];
+    const lng = coords[1];
 
     // Limpar o mapa
     map.eachLayer(layer => {
