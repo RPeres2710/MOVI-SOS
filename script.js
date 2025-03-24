@@ -58,6 +58,12 @@ async function fetchNearbyPlaces(lat, lng, type, query) {
         // Log detalhado para depuração
         console.log(`Resultados para ${type}:`, data.elements);
 
+        // Verificar se há elementos retornados
+        if (!data.elements || data.elements.length === 0) {
+            console.log(`Nenhum resultado encontrado para ${type} em ${radius} metros.`);
+            return [];
+        }
+
         // Processar os resultados
         return data.elements.map(element => {
             const pointLat = element.type === 'node' ? element.lat : element.center.lat;
@@ -86,29 +92,38 @@ function closeAddressBox() {
 
 // Função para limpar o formulário, o mapa e as listas
 function resetForm() {
+    console.log('Função resetForm() chamada.');
+
     // Limpar o campo de entrada
-    document.getElementById('coords').value = '';
+    const coordsInput = document.getElementById('coords');
+    coordsInput.value = '';
+    console.log('Campo de entrada limpo:', coordsInput.value);
 
     // Limpar o mapa (remover todos os marcadores, mas manter a camada de tiles)
     map.eachLayer(layer => {
         if (layer instanceof L.Marker) {
             map.removeLayer(layer);
+            console.log('Marcador removido do mapa.');
         }
     });
 
     // Esconder a caixa de endereço do ponto principal
-    document.getElementById('main-point-address').style.display = 'none';
+    const addressBox = document.getElementById('main-point-address');
+    addressBox.style.display = 'none';
     document.getElementById('main-point-address-text').textContent = '';
+    console.log('Caixa de endereço escondida e texto limpo.');
 
     // Limpar as listas de pontos de apoio
     const lists = ['hospital-list', 'police-list', 'firefighter-list', 'locksmith-list', 'mechanic-list'];
     lists.forEach(listId => {
         const list = document.getElementById(listId);
         list.innerHTML = '';
+        console.log(`Lista ${listId} limpa.`);
     });
 
     // Centralizar o mapa na posição inicial
     map.setView([-22.92048625354668, -43.17458379592426], 11);
+    console.log('Mapa centralizado na posição inicial.');
 }
 
 // Função para buscar e exibir a localização
@@ -187,6 +202,9 @@ async function searchLocation() {
                 node(around:10000,${lat},${lng})["destination"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia"];
                 way(around:10000,${lat},${lng})["destination"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia"];
                 relation(around:10000,${lat},${lng})["destination"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia"];
+                node(around:10000,${lat},${lng})["name"~"Polícia"];
+                way(around:10000,${lat},${lng})["name"~"Polícia"];
+                relation(around:10000,${lat},${lng})["name"~"Polícia"];
             );
             out center;
         `;
@@ -211,6 +229,9 @@ async function searchLocation() {
                 node(around:10000,${lat},${lng})["amenity"="fire_station"]["name"~"Corpo de Bombeiros|Bombeiros|Quartel"];
                 way(around:10000,${lat},${lng})["amenity"="fire_station"]["name"~"Corpo de Bombeiros|Bombeiros|Quartel"];
                 relation(around:10000,${lat},${lng})["amenity"="fire_station"]["name"~"Corpo de Bombeiros|Bombeiros|Quartel"];
+                node(around:10000,${lat},${lng})["name"~"Bombeiros"];
+                way(around:10000,${lat},${lng})["name"~"Bombeiros"];
+                relation(around:10000,${lat},${lng})["name"~"Bombeiros"];
             );
             out center;
         `;
@@ -232,6 +253,9 @@ async function searchLocation() {
                 node(around:10000,${lat},${lng})["shop"="locksmith"]["name"~"Chaveiro"];
                 way(around:10000,${lat},${lng})["shop"="locksmith"]["name"~"Chaveiro"];
                 relation(around:10000,${lat},${lng})["shop"="locksmith"]["name"~"Chaveiro"];
+                node(around:10000,${lat},${lng})["name"~"Chaveiro"];
+                way(around:10000,${lat},${lng})["name"~"Chaveiro"];
+                relation(around:10000,${lat},${lng})["name"~"Chaveiro"];
             );
             out center;
         `;
@@ -256,6 +280,9 @@ async function searchLocation() {
                 node(around:10000,${lat},${lng})["shop"="car_repair"]["name"~"Oficina|Auto|Mecânica"];
                 way(around:10000,${lat},${lng})["shop"="car_repair"]["name"~"Oficina|Auto|Mecânica"];
                 relation(around:10000,${lat},${lng})["shop"="car_repair"]["name"~"Oficina|Auto|Mecânica"];
+                node(around:10000,${lat},${lng})["name"~"Oficina"];
+                way(around:10000,${lat},${lng})["name"~"Oficina"];
+                relation(around:10000,${lat},${lng})["name"~"Oficina"];
             );
             out center;
         `;
@@ -285,6 +312,7 @@ async function searchLocation() {
                 Endereço: ${point.address}<br>
                 Telefone: ${point.phone}
             `);
+            console.log(`Marcador adicionado para ${point.name} (${point.type}) em [${point.lat}, ${point.lng}]`);
         });
 
         // Filtrar e ordenar por distância para cada categoria
@@ -313,6 +341,7 @@ function updateTable(listId, points) {
     list.innerHTML = '';
     if (points.length === 0) {
         list.innerHTML = '<li>Nenhum encontrado em 10 km</li>';
+        console.log(`Nenhum ponto encontrado para ${listId}.`);
         return;
     }
     points.forEach(point => {
@@ -320,6 +349,7 @@ function updateTable(listId, points) {
             const li = document.createElement('li');
             li.textContent = `${point.name} (${point.distance.toFixed(2)} km)`;
             list.appendChild(li);
+            console.log(`Ponto adicionado à lista ${listId}: ${point.name} (${point.distance.toFixed(2)} km)`);
         }
     });
 }
