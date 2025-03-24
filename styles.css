@@ -84,6 +84,15 @@ h2 {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
+.input-section button:nth-child(4) { /* Estilo específico para o botão "Limpar" */
+    background: linear-gradient(90deg, #66252d, #0e1e3f); /* Inverte o gradiente para diferenciar */
+}
+
+.input-section button:nth-child(4):hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
 .address-box {
     background: linear-gradient(135deg, #ffffff, #f5f5f5);
     border: 3px solid #0e1e3f;
