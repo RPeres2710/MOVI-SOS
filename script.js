@@ -44,9 +44,20 @@ async function getMainPointAddress(lat, lng) {
 }
 
 // Função para buscar lugares próximos usando a Overpass API
-async function fetchNearbyPlaces(lat, lng, type, query) {
-    const radius = 20000; // Aumentado para 20 km
+async function fetchNearbyPlaces(lat, lng, type, tags) {
+    const radius = 15000; // 15 km
     const overpassUrl = `https://overpass-api.de/api/interpreter`;
+
+    // Construir a consulta Overpass QL com tags alternativas
+    const query = `
+        [out:json][timeout:60];
+        (
+            node(around:${radius},${lat},${lng})${tags};
+            way(around:${radius},${lat},${lng})${tags};
+            relation(around:${radius},${lat},${lng})${tags};
+        );
+        out center;
+    `;
 
     try {
         const response = await fetch(overpassUrl, {
@@ -120,107 +131,12 @@ async function searchLocation() {
 
     // Buscar pontos de apoio próximos usando a Overpass API
     try {
-        // Consulta para Hospitais
-        const hospitalQuery = `
-            [out:json][timeout:60];
-            (
-                node(around:20000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
-                way(around:20000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
-                relation(around:20000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
-                node(around:20000,${lat},${lng})["healthcare"="hospital"];
-                way(around:20000,${lat},${lng})["healthcare"="hospital"];
-                relation(around:20000,${lat},${lng})["healthcare"="hospital"];
-                node(around:20000,${lat},${lng})["amenity"="hospital"]["name"~"Hospital|Clínica"];
-                way(around:20000,${lat},${lng})["amenity"="hospital"]["name"~"Hospital|Clínica"];
-                relation(around:20000,${lat},${lng})["amenity"="hospital"]["name"~"Hospital|Clínica"];
-            );
-            out center;
-        `;
-        const hospitals = await fetchNearbyPlaces(lat, lng, 'hospital', hospitalQuery);
-
-        // Consulta para Polícia (BPM, DP, DEAT, etc.)
-        const policeQuery = `
-            [out:json][timeout:60];
-            (
-                node(around:20000,${lat},${lng})["amenity"="police"];
-                way(around:20000,${lat},${lng})["amenity"="police"];
-                relation(around:20000,${lat},${lng})["amenity"="police"];
-                node(around:20000,${lat},${lng})["building"="police"];
-                way(around:20000,${lat},${lng})["building"="police"];
-                relation(around:20000,${lat},${lng})["building"="police"];
-                node(around:20000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar|Polícia Civil|Polícia Federal"];
-                way(around:20000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar|Polícia Civil|Polícia Federal"];
-                relation(around:20000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar|Polícia Civil|Polícia Federal"];
-                node(around:20000,${lat},${lng})["destination"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia"];
-                way(around:20000,${lat},${lng})["destination"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia"];
-                relation(around:20000,${lat},${lng})["destination"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia"];
-            );
-            out center;
-        `;
-        const police = await fetchNearbyPlaces(lat, lng, 'police', policeQuery);
-
-        // Consulta para Bombeiros
-        const firefighterQuery = `
-            [out:json][timeout:60];
-            (
-                node(around:20000,${lat},${lng})["amenity"="fire_station"];
-                way(around:20000,${lat},${lng})["amenity"="fire_station"];
-                relation(around:20000,${lat},${lng})["amenity"="fire_station"];
-                node(around:20000,${lat},${lng})["emergency"="fire_station"];
-                way(around:20000,${lat},${lng})["emergency"="fire_station"];
-                relation(around:20000,${lat},${lng})["emergency"="fire_station"];
-                node(around:20000,${lat},${lng})["building"="fire_station"];
-                way(around:20000,${lat},${lng})["building"="fire_station"];
-                relation(around:20000,${lat},${lng})["building"="fire_station"];
-                node(around:20000,${lat},${lng})["amenity"="fire_station"]["name"~"Corpo de Bombeiros|Bombeiros"];
-                way(around:20000,${lat},${lng})["amenity"="fire_station"]["name"~"Corpo de Bombeiros|Bombeiros"];
-                relation(around:20000,${lat},${lng})["amenity"="fire_station"]["name"~"Corpo de Bombeiros|Bombeiros"];
-            );
-            out center;
-        `;
-        const firefighters = await fetchNearbyPlaces(lat, lng, 'firefighter', firefighterQuery);
-
-        // Consulta para Chaveiros
-        const locksmithQuery = `
-            [out:json][timeout:60];
-            (
-                node(around:20000,${lat},${lng})["shop"="locksmith"];
-                way(around:20000,${lat},${lng})["shop"="locksmith"];
-                relation(around:20000,${lat},${lng})["shop"="locksmith"];
-                node(around:20000,${lat},${lng})["craft"="locksmith"];
-                way(around:20000,${lat},${lng})["craft"="locksmith"];
-                relation(around:20000,${lat},${lng})["craft"="locksmith"];
-                node(around:20000,${lat},${lng})["shop"="locksmith"]["name"~"Chaveiro"];
-                way(around:20000,${lat},${lng})["shop"="locksmith"]["name"~"Chaveiro"];
-                relation(around:20000,${lat},${lng})["shop"="locksmith"]["name"~"Chaveiro"];
-                node(around:20000,${lat},${lng})["service"="locksmith"];
-                way(around:20000,${lat},${lng})["service"="locksmith"];
-                relation(around:20000,${lat},${lng})["service"="locksmith"];
-            );
-            out center;
-        `;
-        const locksmiths = await fetchNearbyPlaces(lat, lng, 'locksmith', locksmithQuery);
-
-        // Consulta para Mecânicos
-        const mechanicQuery = `
-            [out:json][timeout:60];
-            (
-                node(around:20000,${lat},${lng})["shop"="car_repair"];
-                way(around:20000,${lat},${lng})["shop"="car_repair"];
-                relation(around:20000,${lat},${lng})["shop"="car_repair"];
-                node(around:20000,${lat},${lng})["amenity"="car_repair"];
-                way(around:20000,${lat},${lng})["amenity"="car_repair"];
-                relation(around:20000,${lat},${lng})["amenity"="car_repair"];
-                node(around:20000,${lat},${lng})["craft"="car_repair"];
-                way(around:20000,${lat},${lng})["craft"="car_repair"];
-                relation(around:20000,${lat},${lng})["craft"="car_repair"];
-                node(around:20000,${lat},${lng})["shop"="car_repair"]["name"~"Oficina|Auto|Mecânica"];
-                way(around:20000,${lat},${lng})["shop"="car_repair"]["name"~"Oficina|Auto|Mecânica"];
-                relation(around:20000,${lat},${lng})["shop"="car_repair"]["name"~"Oficina|Auto|Mecânica"];
-            );
-            out center;
-        `;
-        const mechanics = await fetchNearbyPlaces(lat, lng, 'mechanic', mechanicQuery);
+        // Tags expandidas para capturar mais resultados
+        const hospitals = await fetchNearbyPlaces(lat, lng, 'hospital', '["amenity"="hospital"]["amenity"!="veterinary"]["healthcare"="hospital"]');
+        const police = await fetchNearbyPlaces(lat, lng, 'police', '["amenity"="police"]["building"="police"]["police"]');
+        const firefighters = await fetchNearbyPlaces(lat, lng, 'firefighter', '["amenity"="fire_station"]["emergency"="fire_station"]');
+        const locksmiths = await fetchNearbyPlaces(lat, lng, 'locksmith', '["shop"="locksmith"]["craft"="locksmith"]');
+        const mechanics = await fetchNearbyPlaces(lat, lng, 'mechanic', '["shop"="car_repair"]["amenity"="car_repair"]');
 
         // Combinar todos os pontos
         const allPoints = [...hospitals, ...police, ...firefighters, ...locksmiths, ...mechanics];
@@ -273,11 +189,11 @@ function updateTable(listId, points) {
     const list = document.getElementById(listId);
     list.innerHTML = '';
     if (points.length === 0) {
-        list.innerHTML = '<li>Nenhum encontrado em 20 km</li>';
+        list.innerHTML = '<li>Nenhum encontrado em 15 km</li>';
         return;
     }
     points.forEach(point => {
-        if (point.distance <= 20) {
+        if (point.distance <= 15) {
             const li = document.createElement('li');
             li.textContent = `${point.name} (${point.distance.toFixed(2)} km)`;
             list.appendChild(li);
