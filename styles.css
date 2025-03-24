@@ -28,7 +28,7 @@ h1, h2 {
 
 .input-section input {
     padding: 5px;
-    width: 300px; /* Aumentei a largura para acomodar as duas coordenadas */
+    width: 300px; /* Largura ajustada para acomodar as coordenadas */
 }
 
 .input-section button {
