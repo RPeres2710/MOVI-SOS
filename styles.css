@@ -1,8 +1,9 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Arial', sans-serif;
     margin: 0;
     padding: 20px;
-    background-color: #f4f4f4;
+    background-color: #ffffff; /* Fundo branco */
+    color: #0e1e3f; /* Texto azul escuro */
 }
 
 .container {
@@ -10,71 +11,117 @@ body {
     margin: 0 auto;
 }
 
-h1, h2 {
+h1 {
     text-align: center;
-    color: #333;
+    color: #0e1e3f; /* Azul escuro da Movisafe */
+    font-weight: bold;
+    font-size: 2.5em;
+    margin-bottom: 20px;
+}
+
+h2 {
+    text-align: center;
+    color: #0e1e3f;
+    font-size: 1.8em;
+    margin: 20px 0;
 }
 
 .input-section {
     display: flex;
     justify-content: center;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 15px;
+    margin-bottom: 30px;
 }
 
 .input-section label {
     font-weight: bold;
+    font-size: 1.1em;
+    color: #0e1e3f;
+    align-self: center;
 }
 
 .input-section input {
-    padding: 5px;
-    width: 300px; /* Largura ajustada para acomodar as coordenadas */
+    padding: 10px;
+    width: 350px;
+    border: 2px solid #0e1e3f;
+    border-radius: 5px;
+    font-size: 1em;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.input-section input:focus {
+    border-color: #66252d; /* Vermelho escuro da Movisafe */
 }
 
 .input-section button {
-    padding: 5px 15px;
-    background-color: #007bff;
-    color: white;
+    padding: 10px 20px;
+    background-color: #0e1e3f; /* Azul escuro */
+    color: #ffffff;
     border: none;
+    border-radius: 5px;
+    font-size: 1em;
     cursor: pointer;
+    transition: background-color 0.3s;
 }
 
 .input-section button:hover {
-    background-color: #0056b3;
+    background-color: #66252d; /* Vermelho escuro */
 }
 
 #map {
     height: 500px;
     width: 100%;
-    border: 1px solid #ccc;
-    margin-bottom: 20px;
+    border: 2px solid #0e1e3f;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .support-points {
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap; /* Permite que as caixas quebrem para a próxima linha em telas menores */
     gap: 20px;
+    justify-content: center;
 }
 
 .category {
     flex: 1;
-    background-color: white;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    min-width: 200px; /* Garante que as caixas não fiquem muito estreitas */
+    background-color: #ffffff;
+    padding: 15px;
+    border: 2px solid #0e1e3f;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s;
+}
+
+.category:hover {
+    transform: translateY(-5px); /* Efeito de elevação ao passar o mouse */
 }
 
 .category h3 {
     margin-top: 0;
-    color: #333;
+    color: #66252d; /* Vermelho escuro */
+    font-size: 1.3em;
+    text-align: center;
+    border-bottom: 2px solid #0e1e3f;
+    padding-bottom: 5px;
 }
 
 .category ul {
     list-style: none;
     padding: 0;
+    max-height: 200px;
+    overflow-y: auto;
 }
 
 .category li {
-    margin-bottom: 5px;
-    color: #555;
+    margin-bottom: 10px;
+    color: #0e1e3f;
+    font-size: 0.95em;
+    padding: 5px;
+    border-left: 4px solid #66252d;
+    background-color: #f9f9f9;
+    border-radius: 3px;
 }
