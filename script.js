@@ -45,7 +45,7 @@ async function getMainPointAddress(lat, lng) {
 
 // Função para buscar lugares próximos usando a Overpass API
 async function fetchNearbyPlaces(lat, lng, type, query) {
-    const radius = 10000; // Fixado em 10 km
+    const radius = 15000; // Ajustado para 15 km
     const overpassUrl = `https://overpass-api.de/api/interpreter`;
 
     try {
@@ -166,15 +166,15 @@ async function searchLocation() {
         const hospitalQuery = `
             [out:json][timeout:60];
             (
-                node(around:10000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
-                way(around:10000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
-                relation(around:10000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
-                node(around:10000,${lat},${lng})["healthcare"="hospital"];
-                way(around:10000,${lat},${lng})["healthcare"="hospital"];
-                relation(around:10000,${lat},${lng})["healthcare"="hospital"];
-                node(around:10000,${lat},${lng})["amenity"="hospital"]["name"~"Hospital|Clínica"];
-                way(around:10000,${lat},${lng})["amenity"="hospital"]["name"~"Hospital|Clínica"];
-                relation(around:10000,${lat},${lng})["amenity"="hospital"]["name"~"Hospital|Clínica"];
+                node(around:15000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
+                way(around:15000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
+                relation(around:15000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
+                node(around:15000,${lat},${lng})["healthcare"="hospital"];
+                way(around:15000,${lat},${lng})["healthcare"="hospital"];
+                relation(around:15000,${lat},${lng})["healthcare"="hospital"];
+                node(around:15000,${lat},${lng})["amenity"="hospital"]["name"~"Hospital|Clínica"];
+                way(around:15000,${lat},${lng})["amenity"="hospital"]["name"~"Hospital|Clínica"];
+                relation(around:15000,${lat},${lng})["amenity"="hospital"]["name"~"Hospital|Clínica"];
             );
             out center;
         `;
@@ -184,27 +184,27 @@ async function searchLocation() {
         const policeQuery = `
             [out:json][timeout:60];
             (
-                node(around:10000,${lat},${lng})["amenity"="police"];
-                way(around:10000,${lat},${lng})["amenity"="police"];
-                relation(around:10000,${lat},${lng})["amenity"="police"];
-                node(around:10000,${lat},${lng})["amenity"="police_station"];
-                way(around:10000,${lat},${lng})["amenity"="police_station"];
-                relation(around:10000,${lat},${lng})["amenity"="police_station"];
-                node(around:10000,${lat},${lng})["building"="police"];
-                way(around:10000,${lat},${lng})["building"="police"];
-                relation(around:10000,${lat},${lng})["building"="police"];
-                node(around:10000,${lat},${lng})["office"="police"];
-                way(around:10000,${lat},${lng})["office"="police"];
-                relation(around:10000,${lat},${lng})["office"="police"];
-                node(around:10000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar|Polícia Civil|Polícia Federal"];
-                way(around:10000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar|Polícia Civil|Polícia Federal"];
-                relation(around:10000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar|Polícia Civil|Polícia Federal"];
-                node(around:10000,${lat},${lng})["destination"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia"];
-                way(around:10000,${lat},${lng})["destination"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia"];
-                relation(around:10000,${lat},${lng})["destination"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia"];
-                node(around:10000,${lat},${lng})["name"~"Polícia"];
-                way(around:10000,${lat},${lng})["name"~"Polícia"];
-                relation(around:10000,${lat},${lng})["name"~"Polícia"];
+                node(around:15000,${lat},${lng})["amenity"="police"];
+                way(around:15000,${lat},${lng})["amenity"="police"];
+                relation(around:15000,${lat},${lng})["amenity"="police"];
+                node(around:15000,${lat},${lng})["amenity"="police_station"];
+                way(around:15000,${lat},${lng})["amenity"="police_station"];
+                relation(around:15000,${lat},${lng})["amenity"="police_station"];
+                node(around:15000,${lat},${lng})["building"="police"];
+                way(around:15000,${lat},${lng})["building"="police"];
+                relation(around:15000,${lat},${lng})["building"="police"];
+                node(around:15000,${lat},${lng})["office"="police"];
+                way(around:15000,${lat},${lng})["office"="police"];
+                relation(around:15000,${lat},${lng})["office"="police"];
+                node(around:15000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar|Polícia Civil|Polícia Federal"];
+                way(around:15000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar|Polícia Civil|Polícia Federal"];
+                relation(around:15000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar|Polícia Civil|Polícia Federal"];
+                node(around:15000,${lat},${lng})["destination"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia"];
+                way(around:15000,${lat},${lng})["destination"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia"];
+                relation(around:15000,${lat},${lng})["destination"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia"];
+                node(around:15000,${lat},${lng})["name"~"Polícia|Delegacia|Batalhão"];
+                way(around:15000,${lat},${lng})["name"~"Polícia|Delegacia|Batalhão"];
+                relation(around:15000,${lat},${lng})["name"~"Polícia|Delegacia|Batalhão"];
             );
             out center;
         `;
@@ -214,24 +214,24 @@ async function searchLocation() {
         const firefighterQuery = `
             [out:json][timeout:60];
             (
-                node(around:10000,${lat},${lng})["amenity"="fire_station"];
-                way(around:10000,${lat},${lng})["amenity"="fire_station"];
-                relation(around:10000,${lat},${lng})["amenity"="fire_station"];
-                node(around:10000,${lat},${lng})["emergency"="fire_station"];
-                way(around:10000,${lat},${lng})["emergency"="fire_station"];
-                relation(around:10000,${lat},${lng})["emergency"="fire_station"];
-                node(around:10000,${lat},${lng})["emergency"="fire_department"];
-                way(around:10000,${lat},${lng})["emergency"="fire_department"];
-                relation(around:10000,${lat},${lng})["emergency"="fire_department"];
-                node(around:10000,${lat},${lng})["building"="fire_station"];
-                way(around:10000,${lat},${lng})["building"="fire_station"];
-                relation(around:10000,${lat},${lng})["building"="fire_station"];
-                node(around:10000,${lat},${lng})["amenity"="fire_station"]["name"~"Corpo de Bombeiros|Bombeiros|Quartel"];
-                way(around:10000,${lat},${lng})["amenity"="fire_station"]["name"~"Corpo de Bombeiros|Bombeiros|Quartel"];
-                relation(around:10000,${lat},${lng})["amenity"="fire_station"]["name"~"Corpo de Bombeiros|Bombeiros|Quartel"];
-                node(around:10000,${lat},${lng})["name"~"Bombeiros"];
-                way(around:10000,${lat},${lng})["name"~"Bombeiros"];
-                relation(around:10000,${lat},${lng})["name"~"Bombeiros"];
+                node(around:15000,${lat},${lng})["amenity"="fire_station"];
+                way(around:15000,${lat},${lng})["amenity"="fire_station"];
+                relation(around:15000,${lat},${lng})["amenity"="fire_station"];
+                node(around:15000,${lat},${lng})["emergency"="fire_station"];
+                way(around:15000,${lat},${lng})["emergency"="fire_station"];
+                relation(around:15000,${lat},${lng})["emergency"="fire_station"];
+                node(around:15000,${lat},${lng})["emergency"="fire_department"];
+                way(around:15000,${lat},${lng})["emergency"="fire_department"];
+                relation(around:15000,${lat},${lng})["emergency"="fire_department"];
+                node(around:15000,${lat},${lng})["building"="fire_station"];
+                way(around:15000,${lat},${lng})["building"="fire_station"];
+                relation(around:15000,${lat},${lng})["building"="fire_station"];
+                node(around:15000,${lat},${lng})["amenity"="fire_station"]["name"~"Corpo de Bombeiros|Bombeiros|Quartel"];
+                way(around:15000,${lat},${lng})["amenity"="fire_station"]["name"~"Corpo de Bombeiros|Bombeiros|Quartel"];
+                relation(around:15000,${lat},${lng})["amenity"="fire_station"]["name"~"Corpo de Bombeiros|Bombeiros|Quartel"];
+                node(around:15000,${lat},${lng})["name"~"Bombeiros|Quartel"];
+                way(around:15000,${lat},${lng})["name"~"Bombeiros|Quartel"];
+                relation(around:15000,${lat},${lng})["name"~"Bombeiros|Quartel"];
             );
             out center;
         `;
@@ -241,21 +241,21 @@ async function searchLocation() {
         const locksmithQuery = `
             [out:json][timeout:60];
             (
-                node(around:10000,${lat},${lng})["shop"="locksmith"];
-                way(around:10000,${lat},${lng})["shop"="locksmith"];
-                relation(around:10000,${lat},${lng})["shop"="locksmith"];
-                node(around:10000,${lat},${lng})["craft"="locksmith"];
-                way(around:10000,${lat},${lng})["craft"="locksmith"];
-                relation(around:10000,${lat},${lng})["craft"="locksmith"];
-                node(around:10000,${lat},${lng})["service"="locksmith"];
-                way(around:10000,${lat},${lng})["service"="locksmith"];
-                relation(around:10000,${lat},${lng})["service"="locksmith"];
-                node(around:10000,${lat},${lng})["shop"="locksmith"]["name"~"Chaveiro"];
-                way(around:10000,${lat},${lng})["shop"="locksmith"]["name"~"Chaveiro"];
-                relation(around:10000,${lat},${lng})["shop"="locksmith"]["name"~"Chaveiro"];
-                node(around:10000,${lat},${lng})["name"~"Chaveiro"];
-                way(around:10000,${lat},${lng})["name"~"Chaveiro"];
-                relation(around:10000,${lat},${lng})["name"~"Chaveiro"];
+                node(around:15000,${lat},${lng})["shop"="locksmith"];
+                way(around:15000,${lat},${lng})["shop"="locksmith"];
+                relation(around:15000,${lat},${lng})["shop"="locksmith"];
+                node(around:15000,${lat},${lng})["craft"="locksmith"];
+                way(around:15000,${lat},${lng})["craft"="locksmith"];
+                relation(around:15000,${lat},${lng})["craft"="locksmith"];
+                node(around:15000,${lat},${lng})["service"="locksmith"];
+                way(around:15000,${lat},${lng})["service"="locksmith"];
+                relation(around:15000,${lat},${lng})["service"="locksmith"];
+                node(around:15000,${lat},${lng})["shop"="locksmith"]["name"~"Chaveiro"];
+                way(around:15000,${lat},${lng})["shop"="locksmith"]["name"~"Chaveiro"];
+                relation(around:15000,${lat},${lng})["shop"="locksmith"]["name"~"Chaveiro"];
+                node(around:15000,${lat},${lng})["name"~"Chaveiro"];
+                way(around:15000,${lat},${lng})["name"~"Chaveiro"];
+                relation(around:15000,${lat},${lng})["name"~"Chaveiro"];
             );
             out center;
         `;
@@ -265,24 +265,24 @@ async function searchLocation() {
         const mechanicQuery = `
             [out:json][timeout:60];
             (
-                node(around:10000,${lat},${lng})["shop"="car_repair"];
-                way(around:10000,${lat},${lng})["shop"="car_repair"];
-                relation(around:10000,${lat},${lng})["shop"="car_repair"];
-                node(around:10000,${lat},${lng})["amenity"="car_repair"];
-                way(around:10000,${lat},${lng})["amenity"="car_repair"];
-                relation(around:10000,${lat},${lng})["amenity"="car_repair"];
-                node(around:10000,${lat},${lng})["amenity"="car_workshop"];
-                way(around:10000,${lat},${lng})["amenity"="car_workshop"];
-                relation(around:10000,${lat},${lng})["amenity"="car_workshop"];
-                node(around:10000,${lat},${lng})["craft"="car_repair"];
-                way(around:10000,${lat},${lng})["craft"="car_repair"];
-                relation(around:10000,${lat},${lng})["craft"="car_repair"];
-                node(around:10000,${lat},${lng})["shop"="car_repair"]["name"~"Oficina|Auto|Mecânica"];
-                way(around:10000,${lat},${lng})["shop"="car_repair"]["name"~"Oficina|Auto|Mecânica"];
-                relation(around:10000,${lat},${lng})["shop"="car_repair"]["name"~"Oficina|Auto|Mecânica"];
-                node(around:10000,${lat},${lng})["name"~"Oficina"];
-                way(around:10000,${lat},${lng})["name"~"Oficina"];
-                relation(around:10000,${lat},${lng})["name"~"Oficina"];
+                node(around:15000,${lat},${lng})["shop"="car_repair"];
+                way(around:15000,${lat},${lng})["shop"="car_repair"];
+                relation(around:15000,${lat},${lng})["shop"="car_repair"];
+                node(around:15000,${lat},${lng})["amenity"="car_repair"];
+                way(around:15000,${lat},${lng})["amenity"="car_repair"];
+                relation(around:15000,${lat},${lng})["amenity"="car_repair"];
+                node(around:15000,${lat},${lng})["amenity"="car_workshop"];
+                way(around:15000,${lat},${lng})["amenity"="car_workshop"];
+                relation(around:15000,${lat},${lng})["amenity"="car_workshop"];
+                node(around:15000,${lat},${lng})["craft"="car_repair"];
+                way(around:15000,${lat},${lng})["craft"="car_repair"];
+                relation(around:15000,${lat},${lng})["craft"="car_repair"];
+                node(around:15000,${lat},${lng})["shop"="car_repair"]["name"~"Oficina|Auto|Mecânica"];
+                way(around:15000,${lat},${lng})["shop"="car_repair"]["name"~"Oficina|Auto|Mecânica"];
+                relation(around:15000,${lat},${lng})["shop"="car_repair"]["name"~"Oficina|Auto|Mecânica"];
+                node(around:15000,${lat},${lng})["name"~"Oficina|Mecânica|Auto"];
+                way(around:15000,${lat},${lng})["name"~"Oficina|Mecânica|Auto"];
+                relation(around:15000,${lat},${lng})["name"~"Oficina|Mecânica|Auto"];
             );
             out center;
         `;
@@ -340,12 +340,12 @@ function updateTable(listId, points) {
     const list = document.getElementById(listId);
     list.innerHTML = '';
     if (points.length === 0) {
-        list.innerHTML = '<li>Nenhum encontrado em 10 km</li>';
+        list.innerHTML = '<li>Nenhum encontrado em 15 km</li>';
         console.log(`Nenhum ponto encontrado para ${listId}.`);
         return;
     }
     points.forEach(point => {
-        if (point.distance <= 10) {
+        if (point.distance <= 15) {
             const li = document.createElement('li');
             li.textContent = `${point.name} (${point.distance.toFixed(2)} km)`;
             list.appendChild(li);
