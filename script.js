@@ -44,20 +44,9 @@ async function getMainPointAddress(lat, lng) {
 }
 
 // Função para buscar lugares próximos usando a Overpass API
-async function fetchNearbyPlaces(lat, lng, type, tags) {
+async function fetchNearbyPlaces(lat, lng, type, query) {
     const radius = 15000; // 15 km
     const overpassUrl = `https://overpass-api.de/api/interpreter`;
-
-    // Construir a consulta Overpass QL com tags alternativas
-    const query = `
-        [out:json][timeout:60];
-        (
-            node(around:${radius},${lat},${lng})${tags};
-            way(around:${radius},${lat},${lng})${tags};
-            relation(around:${radius},${lat},${lng})${tags};
-        );
-        out center;
-    `;
 
     try {
         const response = await fetch(overpassUrl, {
@@ -131,12 +120,83 @@ async function searchLocation() {
 
     // Buscar pontos de apoio próximos usando a Overpass API
     try {
-        // Tags expandidas para capturar mais resultados
-        const hospitals = await fetchNearbyPlaces(lat, lng, 'hospital', '["amenity"="hospital"]["amenity"!="veterinary"]["healthcare"="hospital"]');
-        const police = await fetchNearbyPlaces(lat, lng, 'police', '["amenity"="police"]["building"="police"]["police"]');
-        const firefighters = await fetchNearbyPlaces(lat, lng, 'firefighter', '["amenity"="fire_station"]["emergency"="fire_station"]');
-        const locksmiths = await fetchNearbyPlaces(lat, lng, 'locksmith', '["shop"="locksmith"]["craft"="locksmith"]');
-        const mechanics = await fetchNearbyPlaces(lat, lng, 'mechanic', '["shop"="car_repair"]["amenity"="car_repair"]');
+        // Consulta para Hospitais
+        const hospitalQuery = `
+            [out:json][timeout:60];
+            (
+                node(around:15000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
+                way(around:15000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
+                relation(around:15000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
+                node(around:15000,${lat},${lng})["healthcare"="hospital"];
+                way(around:15000,${lat},${lng})["healthcare"="hospital"];
+                relation(around:15000,${lat},${lng})["healthcare"="hospital"];
+            );
+            out center;
+        `;
+        const hospitals = await fetchNearbyPlaces(lat, lng, 'hospital', hospitalQuery);
+
+        // Consulta para Polícia (BPM, DP, DEAT, etc.)
+        const policeQuery = `
+            [out:json][timeout:60];
+            (
+                node(around:15000,${lat},${lng})["amenity"="police"];
+                way(around:15000,${lat},${lng})["amenity"="police"];
+                relation(around:15000,${lat},${lng})["amenity"="police"];
+                node(around:15000,${lat},${lng})["building"="police"];
+                way(around:15000,${lat},${lng})["building"="police"];
+                relation(around:15000,${lat},${lng})["building"="police"];
+                node(around:15000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar"];
+                way(around:15000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar"];
+                relation(around:15000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar"];
+            );
+            out center;
+        `;
+        const police = await fetchNearbyPlaces(lat, lng, 'police', policeQuery);
+
+        // Consulta para Bombeiros
+        const firefighterQuery = `
+            [out:json][timeout:60];
+            (
+                node(around:15000,${lat},${lng})["amenity"="fire_station"];
+                way(around:15000,${lat},${lng})["amenity"="fire_station"];
+                relation(around:15000,${lat},${lng})["amenity"="fire_station"];
+                node(around:15000,${lat},${lng})["emergency"="fire_station"];
+                way(around:15000,${lat},${lng})["emergency"="fire_station"];
+                relation(around:15000,${lat},${lng})["emergency"="fire_station"];
+            );
+            out center;
+        `;
+        const firefighters = await fetchNearbyPlaces(lat, lng, 'firefighter', firefighterQuery);
+
+        // Consulta para Chaveiros
+        const locksmithQuery = `
+            [out:json][timeout:60];
+            (
+                node(around:15000,${lat},${lng})["shop"="locksmith"];
+                way(around:15000,${lat},${lng})["shop"="locksmith"];
+                relation(around:15000,${lat},${lng})["shop"="locksmith"];
+                node(around:15000,${lat},${lng})["craft"="locksmith"];
+                way(around:15000,${lat},${lng})["craft"="locksmith"];
+                relation(around:15000,${lat},${lng})["craft"="locksmith"];
+            );
+            out center;
+        `;
+        const locksmiths = await fetchNearbyPlaces(lat, lng, 'locksmith', locksmithQuery);
+
+        // Consulta para Mecânicos
+        const mechanicQuery = `
+            [out:json][timeout:60];
+            (
+                node(around:15000,${lat},${lng})["shop"="car_repair"];
+                way(around:15000,${lat},${lng})["shop"="car_repair"];
+                relation(around:15000,${lat},${lng})["shop"="car_repair"];
+                node(around:15000,${lat},${lng})["amenity"="car_repair"];
+                way(around:15000,${lat},${lng})["amenity"="car_repair"];
+                relation(around:15000,${lat},${lng})["amenity"="car_repair"];
+            );
+            out center;
+        `;
+        const mechanics = await fetchNearbyPlaces(lat, lng, 'mechanic', mechanicQuery);
 
         // Combinar todos os pontos
         const allPoints = [...hospitals, ...police, ...firefighters, ...locksmiths, ...mechanics];
