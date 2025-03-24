@@ -45,7 +45,7 @@ async function getMainPointAddress(lat, lng) {
 
 // Função para buscar lugares próximos usando a Overpass API
 async function fetchNearbyPlaces(lat, lng, type, query) {
-    const radius = 20000; // Aumentado para 20 km para cobrir uma área maior
+    const radius = 15000; // 15 km
     const overpassUrl = `https://overpass-api.de/api/interpreter`;
 
     try {
@@ -56,16 +56,10 @@ async function fetchNearbyPlaces(lat, lng, type, query) {
         const data = await response.json();
 
         // Log detalhado para depuração
-        console.log(`Resultados brutos para ${type}:`, data.elements);
-
-        // Verificar se há elementos retornados
-        if (!data.elements || data.elements.length === 0) {
-            console.log(`Nenhum resultado encontrado para ${type} em ${radius} metros.`);
-            return [];
-        }
+        console.log(`Resultados para ${type}:`, data.elements);
 
         // Processar os resultados
-        const places = data.elements.map(element => {
+        return data.elements.map(element => {
             const pointLat = element.type === 'node' ? element.lat : element.center.lat;
             const pointLng = element.type === 'node' ? element.lon : element.center.lon;
 
@@ -79,10 +73,6 @@ async function fetchNearbyPlaces(lat, lng, type, query) {
                 distance: calculateDistance(lat, lng, pointLat, pointLng)
             };
         });
-
-        // Log dos lugares processados
-        console.log(`Lugares processados para ${type}:`, places);
-        return places;
     } catch (error) {
         console.error(`Erro ao buscar ${type}:`, error);
         return [];
@@ -92,42 +82,6 @@ async function fetchNearbyPlaces(lat, lng, type, query) {
 // Função para fechar a caixa de endereço
 function closeAddressBox() {
     document.getElementById('main-point-address').style.display = 'none';
-}
-
-// Função para limpar o formulário, o mapa e as listas
-function resetForm() {
-    console.log('Função resetForm() chamada.');
-
-    // Limpar o campo de entrada
-    const coordsInput = document.getElementById('coords');
-    coordsInput.value = '';
-    console.log('Campo de entrada limpo:', coordsInput.value);
-
-    // Limpar o mapa (remover todos os marcadores, mas manter a camada de tiles)
-    map.eachLayer(layer => {
-        if (layer instanceof L.Marker) {
-            map.removeLayer(layer);
-            console.log('Marcador removido do mapa.');
-        }
-    });
-
-    // Esconder a caixa de endereço do ponto principal
-    const addressBox = document.getElementById('main-point-address');
-    addressBox.style.display = 'none';
-    document.getElementById('main-point-address-text').textContent = '';
-    console.log('Caixa de endereço escondida e texto limpo.');
-
-    // Limpar as listas de pontos de apoio
-    const lists = ['hospital-list', 'police-list', 'firefighter-list', 'locksmith-list', 'mechanic-list'];
-    lists.forEach(listId => {
-        const list = document.getElementById(listId);
-        list.innerHTML = '';
-        console.log(`Lista ${listId} limpa.`);
-    });
-
-    // Centralizar o mapa na posição inicial
-    map.setView([-22.92048625354668, -43.17458379592426], 11);
-    console.log('Mapa centralizado na posição inicial.');
 }
 
 // Função para buscar e exibir a localização
@@ -170,18 +124,12 @@ async function searchLocation() {
         const hospitalQuery = `
             [out:json][timeout:60];
             (
-                node(around:20000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
-                way(around:20000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
-                relation(around:20000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
-                node(around:20000,${lat},${lng})["healthcare"="hospital"];
-                way(around:20000,${lat},${lng})["healthcare"="hospital"];
-                relation(around:20000,${lat},${lng})["healthcare"="hospital"];
-                node(around:20000,${lat},${lng})["amenity"="hospital"]["name"~"Hospital|Clínica"];
-                way(around:20000,${lat},${lng})["amenity"="hospital"]["name"~"Hospital|Clínica"];
-                relation(around:20000,${lat},${lng})["amenity"="hospital"]["name"~"Hospital|Clínica"];
-                node(around:20000,${lat},${lng})["name"~"Hospital|Clínica"];
-                way(around:20000,${lat},${lng})["name"~"Hospital|Clínica"];
-                relation(around:20000,${lat},${lng})["name"~"Hospital|Clínica"];
+                node(around:15000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
+                way(around:15000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
+                relation(around:15000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
+                node(around:15000,${lat},${lng})["healthcare"="hospital"];
+                way(around:15000,${lat},${lng})["healthcare"="hospital"];
+                relation(around:15000,${lat},${lng})["healthcare"="hospital"];
             );
             out center;
         `;
@@ -191,27 +139,15 @@ async function searchLocation() {
         const policeQuery = `
             [out:json][timeout:60];
             (
-                node(around:20000,${lat},${lng})["amenity"="police"];
-                way(around:20000,${lat},${lng})["amenity"="police"];
-                relation(around:20000,${lat},${lng})["amenity"="police"];
-                node(around:20000,${lat},${lng})["amenity"="police_station"];
-                way(around:20000,${lat},${lng})["amenity"="police_station"];
-                relation(around:20000,${lat},${lng})["amenity"="police_station"];
-                node(around:20000,${lat},${lng})["building"="police"];
-                way(around:20000,${lat},${lng})["building"="police"];
-                relation(around:20000,${lat},${lng})["building"="police"];
-                node(around:20000,${lat},${lng})["office"="police"];
-                way(around:20000,${lat},${lng})["office"="police"];
-                relation(around:20000,${lat},${lng})["office"="police"];
-                node(around:20000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar|Polícia Civil|Polícia Federal"];
-                way(around:20000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar|Polícia Civil|Polícia Federal"];
-                relation(around:20000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar|Polícia Civil|Polícia Federal"];
-                node(around:20000,${lat},${lng})["destination"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia"];
-                way(around:20000,${lat},${lng})["destination"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia"];
-                relation(around:20000,${lat},${lng})["destination"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia"];
-                node(around:20000,${lat},${lng})["name"~"Polícia|Delegacia|Batalhão|PM|DP"];
-                way(around:20000,${lat},${lng})["name"~"Polícia|Delegacia|Batalhão|PM|DP"];
-                relation(around:20000,${lat},${lng})["name"~"Polícia|Delegacia|Batalhão|PM|DP"];
+                node(around:15000,${lat},${lng})["amenity"="police"];
+                way(around:15000,${lat},${lng})["amenity"="police"];
+                relation(around:15000,${lat},${lng})["amenity"="police"];
+                node(around:15000,${lat},${lng})["building"="police"];
+                way(around:15000,${lat},${lng})["building"="police"];
+                relation(around:15000,${lat},${lng})["building"="police"];
+                node(around:15000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar"];
+                way(around:15000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar"];
+                relation(around:15000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar"];
             );
             out center;
         `;
@@ -221,24 +157,12 @@ async function searchLocation() {
         const firefighterQuery = `
             [out:json][timeout:60];
             (
-                node(around:20000,${lat},${lng})["amenity"="fire_station"];
-                way(around:20000,${lat},${lng})["amenity"="fire_station"];
-                relation(around:20000,${lat},${lng})["amenity"="fire_station"];
-                node(around:20000,${lat},${lng})["emergency"="fire_station"];
-                way(around:20000,${lat},${lng})["emergency"="fire_station"];
-                relation(around:20000,${lat},${lng})["emergency"="fire_station"];
-                node(around:20000,${lat},${lng})["emergency"="fire_department"];
-                way(around:20000,${lat},${lng})["emergency"="fire_department"];
-                relation(around:20000,${lat},${lng})["emergency"="fire_department"];
-                node(around:20000,${lat},${lng})["building"="fire_station"];
-                way(around:20000,${lat},${lng})["building"="fire_station"];
-                relation(around:20000,${lat},${lng})["building"="fire_station"];
-                node(around:20000,${lat},${lng})["amenity"="fire_station"]["name"~"Corpo de Bombeiros|Bombeiros|Quartel"];
-                way(around:20000,${lat},${lng})["amenity"="fire_station"]["name"~"Corpo de Bombeiros|Bombeiros|Quartel"];
-                relation(around:20000,${lat},${lng})["amenity"="fire_station"]["name"~"Corpo de Bombeiros|Bombeiros|Quartel"];
-                node(around:20000,${lat},${lng})["name"~"Bombeiros|Quartel|Corpo de Bombeiros"];
-                way(around:20000,${lat},${lng})["name"~"Bombeiros|Quartel|Corpo de Bombeiros"];
-                relation(around:20000,${lat},${lng})["name"~"Bombeiros|Quartel|Corpo de Bombeiros"];
+                node(around:15000,${lat},${lng})["amenity"="fire_station"];
+                way(around:15000,${lat},${lng})["amenity"="fire_station"];
+                relation(around:15000,${lat},${lng})["amenity"="fire_station"];
+                node(around:15000,${lat},${lng})["emergency"="fire_station"];
+                way(around:15000,${lat},${lng})["emergency"="fire_station"];
+                relation(around:15000,${lat},${lng})["emergency"="fire_station"];
             );
             out center;
         `;
@@ -248,21 +172,12 @@ async function searchLocation() {
         const locksmithQuery = `
             [out:json][timeout:60];
             (
-                node(around:20000,${lat},${lng})["shop"="locksmith"];
-                way(around:20000,${lat},${lng})["shop"="locksmith"];
-                relation(around:20000,${lat},${lng})["shop"="locksmith"];
-                node(around:20000,${lat},${lng})["craft"="locksmith"];
-                way(around:20000,${lat},${lng})["craft"="locksmith"];
-                relation(around:20000,${lat},${lng})["craft"="locksmith"];
-                node(around:20000,${lat},${lng})["service"="locksmith"];
-                way(around:20000,${lat},${lng})["service"="locksmith"];
-                relation(around:20000,${lat},${lng})["service"="locksmith"];
-                node(around:20000,${lat},${lng})["shop"="locksmith"]["name"~"Chaveiro"];
-                way(around:20000,${lat},${lng})["shop"="locksmith"]["name"~"Chaveiro"];
-                relation(around:20000,${lat},${lng})["shop"="locksmith"]["name"~"Chaveiro"];
-                node(around:20000,${lat},${lng})["name"~"Chaveiro"];
-                way(around:20000,${lat},${lng})["name"~"Chaveiro"];
-                relation(around:20000,${lat},${lng})["name"~"Chaveiro"];
+                node(around:15000,${lat},${lng})["shop"="locksmith"];
+                way(around:15000,${lat},${lng})["shop"="locksmith"];
+                relation(around:15000,${lat},${lng})["shop"="locksmith"];
+                node(around:15000,${lat},${lng})["craft"="locksmith"];
+                way(around:15000,${lat},${lng})["craft"="locksmith"];
+                relation(around:15000,${lat},${lng})["craft"="locksmith"];
             );
             out center;
         `;
@@ -272,24 +187,12 @@ async function searchLocation() {
         const mechanicQuery = `
             [out:json][timeout:60];
             (
-                node(around:20000,${lat},${lng})["shop"="car_repair"];
-                way(around:20000,${lat},${lng})["shop"="car_repair"];
-                relation(around:20000,${lat},${lng})["shop"="car_repair"];
-                node(around:20000,${lat},${lng})["amenity"="car_repair"];
-                way(around:20000,${lat},${lng})["amenity"="car_repair"];
-                relation(around:20000,${lat},${lng})["amenity"="car_repair"];
-                node(around:20000,${lat},${lng})["amenity"="car_workshop"];
-                way(around:20000,${lat},${lng})["amenity"="car_workshop"];
-                relation(around:20000,${lat},${lng})["amenity"="car_workshop"];
-                node(around:20000,${lat},${lng})["craft"="car_repair"];
-                way(around:20000,${lat},${lng})["craft"="car_repair"];
-                relation(around:20000,${lat},${lng})["craft"="car_repair"];
-                node(around:20000,${lat},${lng})["shop"="car_repair"]["name"~"Oficina|Auto|Mecânica"];
-                way(around:20000,${lat},${lng})["shop"="car_repair"]["name"~"Oficina|Auto|Mecânica"];
-                relation(around:20000,${lat},${lng})["shop"="car_repair"]["name"~"Oficina|Auto|Mecânica"];
-                node(around:20000,${lat},${lng})["name"~"Oficina|Mecânica|Auto"];
-                way(around:20000,${lat},${lng})["name"~"Oficina|Mecânica|Auto"];
-                relation(around:20000,${lat},${lng})["name"~"Oficina|Mecânica|Auto"];
+                node(around:15000,${lat},${lng})["shop"="car_repair"];
+                way(around:15000,${lat},${lng})["shop"="car_repair"];
+                relation(around:15000,${lat},${lng})["shop"="car_repair"];
+                node(around:15000,${lat},${lng})["amenity"="car_repair"];
+                way(around:15000,${lat},${lng})["amenity"="car_repair"];
+                relation(around:15000,${lat},${lng})["amenity"="car_repair"];
             );
             out center;
         `;
@@ -319,7 +222,6 @@ async function searchLocation() {
                 Endereço: ${point.address}<br>
                 Telefone: ${point.phone}
             `);
-            console.log(`Marcador adicionado para ${point.name} (${point.type}) em [${point.lat}, ${point.lng}]`);
         });
 
         // Filtrar e ordenar por distância para cada categoria
@@ -347,16 +249,14 @@ function updateTable(listId, points) {
     const list = document.getElementById(listId);
     list.innerHTML = '';
     if (points.length === 0) {
-        list.innerHTML = '<li>Nenhum encontrado em 20 km</li>';
-        console.log(`Nenhum ponto encontrado para ${listId}.`);
+        list.innerHTML = '<li>Nenhum encontrado em 15 km</li>';
         return;
     }
     points.forEach(point => {
-        if (point.distance <= 20) {
+        if (point.distance <= 15) {
             const li = document.createElement('li');
             li.textContent = `${point.name} (${point.distance.toFixed(2)} km)`;
             list.appendChild(li);
-            console.log(`Ponto adicionado à lista ${listId}: ${point.name} (${point.distance.toFixed(2)} km)`);
         }
     });
 }
