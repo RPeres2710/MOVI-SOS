@@ -1,5 +1,5 @@
 // Inicializar o mapa com Leaflet
-let map = L.map('map').setView([-22.92048625354668, -43.17458379592426], 11); // Coordenadas iniciais e zoom ajustado para cidade
+let map = L.map('map').setView([-22.92048625354668, -43.17458379592426], 11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
@@ -8,9 +8,9 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 function createCustomIcon(color) {
     return L.divIcon({
         className: 'custom-icon',
-        html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>`,
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
+        html: `<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white;"></div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
     });
 }
 
@@ -26,13 +26,13 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
     return R * c;
 }
 
-// Função para obter o endereço do ponto principal usando Nominatim (geocodificação reversa)
+// Função para obter o endereço do ponto principal usando Nominatim
 async function getMainPointAddress(lat, lng) {
     const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
     try {
         const response = await fetch(nominatimUrl, {
             headers: {
-                'User-Agent': 'MOVI SOS Dashboard (seu-email@exemplo.com)' // Nominatim exige um User-Agent
+                'User-Agent': 'MOVI SOS Dashboard (seu-email@exemplo.com)'
             }
         });
         const data = await response.json();
@@ -45,13 +45,12 @@ async function getMainPointAddress(lat, lng) {
 
 // Função para buscar lugares próximos usando a Overpass API
 async function fetchNearbyPlaces(lat, lng, type, tags) {
-    // Definir o raio de busca (15 km para cobrir a cidade)
-    const radius = 15000; // em metros
+    const radius = 15000; // 15 km
     const overpassUrl = `https://overpass-api.de/api/interpreter`;
 
     // Construir a consulta Overpass QL com tags alternativas
     const query = `
-        [out:json];
+        [out:json][timeout:60];
         (
             node(around:${radius},${lat},${lng})${tags};
             way(around:${radius},${lat},${lng})${tags};
@@ -67,7 +66,8 @@ async function fetchNearbyPlaces(lat, lng, type, tags) {
         });
         const data = await response.json();
 
-        console.log(`Resultados para ${type}:`, data.elements); // Log para depuração
+        // Log detalhado para depuração
+        console.log(`Resultados para ${type}:`, data.elements);
 
         // Processar os resultados
         return data.elements.map(element => {
@@ -79,8 +79,8 @@ async function fetchNearbyPlaces(lat, lng, type, tags) {
                 name: element.tags.name || 'Desconhecido',
                 lat: pointLat,
                 lng: pointLng,
-                address: element.tags.address || element.tags['addr:street'] || 'Endereço não disponível',
-                phone: element.tags.phone || element.tags.contact || 'Não disponível',
+                address: element.tags['addr:full'] || element.tags['addr:street'] || element.tags.address || 'Endereço não disponível',
+                phone: element.tags.phone || element.tags.contact || element.tags['contact:phone'] || 'Não disponível',
                 distance: calculateDistance(lat, lng, pointLat, pointLng)
             };
         });
@@ -99,7 +99,7 @@ function closeAddressBox() {
 async function searchLocation() {
     const coordsInput = document.getElementById('coords').value.trim();
     
-    // Separar as coordenadas (esperado: "latitude, longitude")
+    // Separar as coordenadas
     const coords = coordsInput.split(',').map(coord => parseFloat(coord.trim()));
     
     if (coords.length !== 2 || isNaN(coords[0]) || isNaN(coords[1])) {
@@ -117,7 +117,7 @@ async function searchLocation() {
         }
     });
 
-    // Centralizar o mapa na nova localização com zoom ajustado para cidade
+    // Centralizar o mapa na nova localização
     map.setView([lat, lng], 11);
 
     // Adicionar marcador amarelo para o ponto inserido
@@ -131,15 +131,18 @@ async function searchLocation() {
 
     // Buscar pontos de apoio próximos usando a Overpass API
     try {
-        // Tags mais amplas para garantir mais resultados
-        const hospitals = await fetchNearbyPlaces(lat, lng, 'hospital', '[amenity=hospital][amenity!=veterinary]');
-        const police = await fetchNearbyPlaces(lat, lng, 'police', '[amenity=police][building=police]');
-        const firefighters = await fetchNearbyPlaces(lat, lng, 'firefighter', '[amenity=fire_station]');
-        const locksmiths = await fetchNearbyPlaces(lat, lng, 'locksmith', '[shop=locksmith]');
-        const mechanics = await fetchNearbyPlaces(lat, lng, 'mechanic', '[shop=car_repair]');
+        // Tags expandidas para capturar mais resultados
+        const hospitals = await fetchNearbyPlaces(lat, lng, 'hospital', '["amenity"="hospital"]["amenity"!="veterinary"]["healthcare"="hospital"]');
+        const police = await fetchNearbyPlaces(lat, lng, 'police', '["amenity"="police"]["building"="police"]["police"]');
+        const firefighters = await fetchNearbyPlaces(lat, lng, 'firefighter', '["amenity"="fire_station"]["emergency"="fire_station"]');
+        const locksmiths = await fetchNearbyPlaces(lat, lng, 'locksmith', '["shop"="locksmith"]["craft"="locksmith"]');
+        const mechanics = await fetchNearbyPlaces(lat, lng, 'mechanic', '["shop"="car_repair"]["amenity"="car_repair"]');
 
         // Combinar todos os pontos
         const allPoints = [...hospitals, ...police, ...firefighters, ...locksmiths, ...mechanics];
+
+        // Log para verificar todos os pontos encontrados
+        console.log('Todos os pontos encontrados:', allPoints);
 
         // Adicionar marcadores ao mapa com popups estilizados
         allPoints.forEach(point => {
@@ -190,7 +193,7 @@ function updateTable(listId, points) {
         return;
     }
     points.forEach(point => {
-        if (point.distance <= 15) { // Mostrar pontos dentro de 15 km
+        if (point.distance <= 15) {
             const li = document.createElement('li');
             li.textContent = `${point.name} (${point.distance.toFixed(2)} km)`;
             list.appendChild(li);
