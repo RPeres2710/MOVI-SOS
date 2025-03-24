@@ -1,5 +1,5 @@
 // Inicializar o mapa com Leaflet
-let map = L.map('map').setView([-22.92048625354668, -43.17458379592426], 11);
+let map = L.map('map').setView([-22.92048625354668, -43.17458379592426], 11); // Coordenadas iniciais e zoom ajustado para cidade
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
@@ -8,9 +8,9 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 function createCustomIcon(color) {
     return L.divIcon({
         className: 'custom-icon',
-        html: `<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white;"></div>`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12]
+        html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
     });
 }
 
@@ -26,13 +26,13 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
     return R * c;
 }
 
-// Função para obter o endereço do ponto principal usando Nominatim
+// Função para obter o endereço do ponto principal usando Nominatim (geocodificação reversa)
 async function getMainPointAddress(lat, lng) {
     const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
     try {
         const response = await fetch(nominatimUrl, {
             headers: {
-                'User-Agent': 'MOVI SOS Dashboard (seu-email@exemplo.com)'
+                'User-Agent': 'MOVI SOS Dashboard (seu-email@exemplo.com)' // Nominatim exige um User-Agent
             }
         });
         const data = await response.json();
@@ -44,9 +44,21 @@ async function getMainPointAddress(lat, lng) {
 }
 
 // Função para buscar lugares próximos usando a Overpass API
-async function fetchNearbyPlaces(lat, lng, type, query) {
-    const radius = 15000; // 15 km
+async function fetchNearbyPlaces(lat, lng, type, tags) {
+    // Definir o raio de busca (15 km para cobrir a cidade)
+    const radius = 15000; // em metros
     const overpassUrl = `https://overpass-api.de/api/interpreter`;
+
+    // Construir a consulta Overpass QL com tags alternativas
+    const query = `
+        [out:json];
+        (
+            node(around:${radius},${lat},${lng})${tags};
+            way(around:${radius},${lat},${lng})${tags};
+            relation(around:${radius},${lat},${lng})${tags};
+        );
+        out center;
+    `;
 
     try {
         const response = await fetch(overpassUrl, {
@@ -55,8 +67,7 @@ async function fetchNearbyPlaces(lat, lng, type, query) {
         });
         const data = await response.json();
 
-        // Log detalhado para depuração
-        console.log(`Resultados para ${type}:`, data.elements);
+        console.log(`Resultados para ${type}:`, data.elements); // Log para depuração
 
         // Processar os resultados
         return data.elements.map(element => {
@@ -68,8 +79,8 @@ async function fetchNearbyPlaces(lat, lng, type, query) {
                 name: element.tags.name || 'Desconhecido',
                 lat: pointLat,
                 lng: pointLng,
-                address: element.tags['addr:full'] || element.tags['addr:street'] || element.tags.address || 'Endereço não disponível',
-                phone: element.tags.phone || element.tags.contact || element.tags['contact:phone'] || 'Não disponível',
+                address: element.tags.address || element.tags['addr:street'] || 'Endereço não disponível',
+                phone: element.tags.phone || element.tags.contact || 'Não disponível',
                 distance: calculateDistance(lat, lng, pointLat, pointLng)
             };
         });
@@ -88,7 +99,7 @@ function closeAddressBox() {
 async function searchLocation() {
     const coordsInput = document.getElementById('coords').value.trim();
     
-    // Separar as coordenadas
+    // Separar as coordenadas (esperado: "latitude, longitude")
     const coords = coordsInput.split(',').map(coord => parseFloat(coord.trim()));
     
     if (coords.length !== 2 || isNaN(coords[0]) || isNaN(coords[1])) {
@@ -106,7 +117,7 @@ async function searchLocation() {
         }
     });
 
-    // Centralizar o mapa na nova localização
+    // Centralizar o mapa na nova localização com zoom ajustado para cidade
     map.setView([lat, lng], 11);
 
     // Adicionar marcador amarelo para o ponto inserido
@@ -120,89 +131,15 @@ async function searchLocation() {
 
     // Buscar pontos de apoio próximos usando a Overpass API
     try {
-        // Consulta para Hospitais
-        const hospitalQuery = `
-            [out:json][timeout:60];
-            (
-                node(around:15000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
-                way(around:15000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
-                relation(around:15000,${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
-                node(around:15000,${lat},${lng})["healthcare"="hospital"];
-                way(around:15000,${lat},${lng})["healthcare"="hospital"];
-                relation(around:15000,${lat},${lng})["healthcare"="hospital"];
-            );
-            out center;
-        `;
-        const hospitals = await fetchNearbyPlaces(lat, lng, 'hospital', hospitalQuery);
-
-        // Consulta para Polícia (BPM, DP, DEAT, etc.)
-        const policeQuery = `
-            [out:json][timeout:60];
-            (
-                node(around:15000,${lat},${lng})["amenity"="police"];
-                way(around:15000,${lat},${lng})["amenity"="police"];
-                relation(around:15000,${lat},${lng})["amenity"="police"];
-                node(around:15000,${lat},${lng})["building"="police"];
-                way(around:15000,${lat},${lng})["building"="police"];
-                relation(around:15000,${lat},${lng})["building"="police"];
-                node(around:15000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar"];
-                way(around:15000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar"];
-                relation(around:15000,${lat},${lng})["amenity"="police"]["name"~"BPM|DP|DEAT|Delegacia|Batalhão|Polícia Militar"];
-            );
-            out center;
-        `;
-        const police = await fetchNearbyPlaces(lat, lng, 'police', policeQuery);
-
-        // Consulta para Bombeiros
-        const firefighterQuery = `
-            [out:json][timeout:60];
-            (
-                node(around:15000,${lat},${lng})["amenity"="fire_station"];
-                way(around:15000,${lat},${lng})["amenity"="fire_station"];
-                relation(around:15000,${lat},${lng})["amenity"="fire_station"];
-                node(around:15000,${lat},${lng})["emergency"="fire_station"];
-                way(around:15000,${lat},${lng})["emergency"="fire_station"];
-                relation(around:15000,${lat},${lng})["emergency"="fire_station"];
-            );
-            out center;
-        `;
-        const firefighters = await fetchNearbyPlaces(lat, lng, 'firefighter', firefighterQuery);
-
-        // Consulta para Chaveiros
-        const locksmithQuery = `
-            [out:json][timeout:60];
-            (
-                node(around:15000,${lat},${lng})["shop"="locksmith"];
-                way(around:15000,${lat},${lng})["shop"="locksmith"];
-                relation(around:15000,${lat},${lng})["shop"="locksmith"];
-                node(around:15000,${lat},${lng})["craft"="locksmith"];
-                way(around:15000,${lat},${lng})["craft"="locksmith"];
-                relation(around:15000,${lat},${lng})["craft"="locksmith"];
-            );
-            out center;
-        `;
-        const locksmiths = await fetchNearbyPlaces(lat, lng, 'locksmith', locksmithQuery);
-
-        // Consulta para Mecânicos
-        const mechanicQuery = `
-            [out:json][timeout:60];
-            (
-                node(around:15000,${lat},${lng})["shop"="car_repair"];
-                way(around:15000,${lat},${lng})["shop"="car_repair"];
-                relation(around:15000,${lat},${lng})["shop"="car_repair"];
-                node(around:15000,${lat},${lng})["amenity"="car_repair"];
-                way(around:15000,${lat},${lng})["amenity"="car_repair"];
-                relation(around:15000,${lat},${lng})["amenity"="car_repair"];
-            );
-            out center;
-        `;
-        const mechanics = await fetchNearbyPlaces(lat, lng, 'mechanic', mechanicQuery);
+        // Tags mais amplas para garantir mais resultados
+        const hospitals = await fetchNearbyPlaces(lat, lng, 'hospital', '[amenity=hospital][amenity!=veterinary]');
+        const police = await fetchNearbyPlaces(lat, lng, 'police', '[amenity=police][building=police]');
+        const firefighters = await fetchNearbyPlaces(lat, lng, 'firefighter', '[amenity=fire_station]');
+        const locksmiths = await fetchNearbyPlaces(lat, lng, 'locksmith', '[shop=locksmith]');
+        const mechanics = await fetchNearbyPlaces(lat, lng, 'mechanic', '[shop=car_repair]');
 
         // Combinar todos os pontos
         const allPoints = [...hospitals, ...police, ...firefighters, ...locksmiths, ...mechanics];
-
-        // Log para verificar todos os pontos encontrados
-        console.log('Todos os pontos encontrados:', allPoints);
 
         // Adicionar marcadores ao mapa com popups estilizados
         allPoints.forEach(point => {
@@ -253,7 +190,7 @@ function updateTable(listId, points) {
         return;
     }
     points.forEach(point => {
-        if (point.distance <= 15) {
+        if (point.distance <= 15) { // Mostrar pontos dentro de 15 km
             const li = document.createElement('li');
             li.textContent = `${point.name} (${point.distance.toFixed(2)} km)`;
             list.appendChild(li);
