@@ -17,6 +17,11 @@
             <input type="text" id="coords" placeholder="Ex: -22.92048625354668, -43.17458379592426">
             <button onclick="searchLocation()">Pesquisar</button>
         </div>
+        <div id="main-point-address" class="address-box" style="display: none;">
+            <h3>Endereço do Ponto Principal</h3>
+            <p id="main-point-address-text"></p>
+            <button onclick="closeAddressBox()">Fechar</button>
+        </div>
         <div id="map"></div>
         <h2>Pontos de Apoio Próximos</h2>
         <div class="support-points">
