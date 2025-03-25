@@ -37,7 +37,7 @@ async function getMainPointAddress(lat, lng) {
     try {
         const response = await fetch(nominatimUrl, {
             headers: {
-                'User-Agent': 'MOVI SOS Dashboard (rperes0510@gmail.com)' 
+                'User-Agent': 'MOVI SOS Dashboard (rperes0510@gmail.com)
             }
         });
         const data = await response.json();
@@ -49,19 +49,65 @@ async function getMainPointAddress(lat, lng) {
 }
 
 // Função para buscar lugares próximos usando a Overpass API
-async function fetchNearbyPlaces(lat, lng, type, tags) {
+async function fetchNearbyPlaces(lat, lng, type) {
     const radius = 15000; // em metros
     const overpassUrl = `https://overpass-api.de/api/interpreter`;
 
-    const query = `
-        [out:json];
-        (
-            node(around:${radius},${lat},${lng})${tags};
-            way(around:${radius},${lat},${lng})${tags};
-            relation(around:${radius},${lat},${lng})${tags};
-        );
-        out center 50;
-    `;
+    let query;
+    switch (type) {
+        case 'hospital':
+            query = `
+                [out:json];
+                (
+                    node(around:${radius},${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
+                    way(around:${radius},${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
+                    relation(around:${radius},${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
+                );
+                out center 50;
+            `;
+            break;
+        case 'police':
+            query = `
+                [out:json];
+                (
+                    node(around:${radius},${lat},${lng})["amenity"="police"];
+                    way(around:${radius},${lat},${lng})["amenity"="police"];
+                    relation(around:${radius},${lat},${lng})["amenity"="police"];
+                    node(around:${radius},${lat},${lng})["destination"~"police"];
+                    way(around:${radius},${lat},${lng})["destination"~"police"];
+                    relation(around:${radius},${lat},${lng})["destination"~"police"];
+                    node(around:${radius},${lat},${lng})["name"~"^(Delegacia|Batalhão|UPP|DEAT|Polícia)"];
+                    way(around:${radius},${lat},${lng})["name"~"^(Delegacia|Batalhão|UPP|DEAT|Polícia)"];
+                    relation(around:${radius},${lat},${lng})["name"~"^(Delegacia|Batalhão|UPP|DEAT|Polícia)"];
+                );
+                out center 50;
+            `;
+            break;
+        case 'firefighter':
+            query = `
+                [out:json];
+                (
+                    node(around:${radius},${lat},${lng})["amenity"="fire_station"];
+                    way(around:${radius},${lat},${lng})["amenity"="fire_station"];
+                    relation(around:${radius},${lat},${lng})["amenity"="fire_station"];
+                );
+                out center 50;
+            `;
+            break;
+        case 'locksmith':
+            query = `
+                [out:json];
+                (
+                    node(around:${radius},${lat},${lng})["shop"="locksmith"];
+                    way(around:${radius},${lat},${lng})["shop"="locksmith"];
+                    relation(around:${radius},${lat},${lng})["shop"="locksmith"];
+                );
+                out center 50;
+            `;
+            break;
+        default:
+            throw new Error(`Tipo desconhecido: ${type}`);
+    }
 
     try {
         const response = await fetch(overpassUrl, {
@@ -154,27 +200,22 @@ async function searchLocation() {
     try {
         const allPoints = [];
 
-        const hospitals = await fetchNearbyPlaces(lat, lng, 'hospital', '["amenity"="hospital"]["amenity"!="veterinary"]');
+        const hospitals = await fetchNearbyPlaces(lat, lng, 'hospital');
         allPoints.push(...hospitals);
         updateTable('hospital-list', hospitals.filter(p => p.distance <= 15).sort((a, b) => a.distance - b.distance));
         await delay(1000);
 
-        // Query corrigida para polícia
-        const police = await fetchNearbyPlaces(lat, lng, 'police', 
-            '["amenity"="police"]|' +
-            '["destination"~"police"]|' +
-            '["name"~"^(Delegacia|Batalhão|UPP|DEAT|Polícia)"]'
-        );
+        const police = await fetchNearbyPlaces(lat, lng, 'police');
         allPoints.push(...police);
         updateTable('police-list', police.filter(p => p.distance <= 15).sort((a, b) => a.distance - b.distance));
         await delay(1000);
 
-        const firefighters = await fetchNearbyPlaces(lat, lng, 'firefighter', '["amenity"="fire_station"]');
+        const firefighters = await fetchNearbyPlaces(lat, lng, 'firefighter');
         allPoints.push(...firefighters);
         updateTable('firefighter-list', firefighters.filter(p => p.distance <= 15).sort((a, b) => a.distance - b.distance));
         await delay(1000);
 
-        const locksmiths = await fetchNearbyPlaces(lat, lng, 'locksmith', '["shop"="locksmith"]');
+        const locksmiths = await fetchNearbyPlaces(lat, lng, 'locksmith');
         allPoints.push(...locksmiths);
         updateTable('locksmith-list', locksmiths.filter(p => p.distance <= 15).sort((a, b) => a.distance - b.distance));
 
