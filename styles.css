@@ -2,8 +2,8 @@ body {
     font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 40px;
-    background-color: #ffffff; /* Fundo branco */
-    color: #0e1e3f; /* Texto azul escuro */
+    background-color: #ffffff;
+    color: #0e1e3f;
 }
 
 .container {
@@ -84,11 +84,11 @@ h2 {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
-.input-section button:nth-child(4) { /* Estilo específico para o botão "Limpar" */
-    background: linear-gradient(90deg, #66252d, #0e1e3f); /* Inverte o gradiente para diferenciar */
+.input-section button:nth-child(3) {
+    background: linear-gradient(90deg, #66252d, #0e1e3f);
 }
 
-.input-section button:nth-child(4):hover {
+.input-section button:nth-child(3):hover {
     transform: scale(1.05);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
@@ -199,7 +199,6 @@ h2 {
     background-color: #e0e0e0;
 }
 
-/* Estilizar os popups do Leaflet */
 .leaflet-popup-content-wrapper {
     background: linear-gradient(135deg, #ffffff, #f5f5f5);
     border-radius: 12px;
@@ -216,7 +215,6 @@ h2 {
     font-size: 1.2em;
 }
 
-/* Animações */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
