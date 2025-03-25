@@ -1,5 +1,5 @@
 // Inicializar o mapa com Leaflet
-let map = L.map('map').setView([-22.92048625354668, -43.17458379592426], 13); // Zoom ajustado para 13
+let map = L.map('map').setView([-22.92048625354668, -43.17458379592426], 13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
@@ -43,7 +43,7 @@ async function getMainPointAddress(lat, lng) {
     }
 }
 
-// Função para buscar lugares próximos usando a Overpass API com limite de resultados
+// Função para buscar lugares próximos usando a Overpass API
 async function fetchNearbyPlaces(lat, lng, type, tags) {
     const radius = 15000; // em metros
     const overpassUrl = `https://overpass-api.de/api/interpreter`;
@@ -101,13 +101,13 @@ function resetForm() {
         }
     });
     document.getElementById('main-point-address').style.display = 'none';
-    ['hospital-list', 'police-list', 'firefighter-list', 'locksmith-list', 'mechanic-list'].forEach(id => {
+    ['hospital-list', 'police-list', 'firefighter-list', 'locksmith-list'].forEach(id => {
         document.getElementById(id).innerHTML = '';
     });
-    map.setView([-22.92048625354668, -43.17458379592426], 13); // Zoom ajustado
+    map.setView([-22.92048625354668, -43.17458379592426], 13);
 }
 
-// Função para buscar e exibir a localização com carregamento sequencial
+// Função para buscar e exibir a localização
 async function searchLocation() {
     const coordsInput = document.getElementById('coords').value.trim();
     const coords = coordsInput.split(',').map(coord => parseFloat(coord.trim()));
@@ -127,7 +127,7 @@ async function searchLocation() {
         }
     });
 
-    // Centralizar o mapa na nova localização com zoom ajustado
+    // Centralizar o mapa na nova localização
     map.setView([lat, lng], 13);
 
     // Adicionar marcador amarelo para o ponto inserido
@@ -143,13 +143,12 @@ async function searchLocation() {
     try {
         const allPoints = [];
 
-        // Buscar uma categoria por vez
         const hospitals = await fetchNearbyPlaces(lat, lng, 'hospital', '[amenity=hospital][amenity!=veterinary]');
         allPoints.push(...hospitals);
         updateTable('hospital-list', hospitals.filter(p => p.distance <= 15).sort((a, b) => a.distance - b.distance));
 
-        // Query ajustada para incluir delegacias, batalhões, DEAT, UPP, etc.
-        const police = await fetchNearbyPlaces(lat, lng, 'police', '[amenity=police]|[destination~"police"]|[name~"^(Delegacia|Batalhão|DEAT|UPP)"]');
+        // Query ajustada para entidades de segurança da polícia
+        const police = await fetchNearbyPlaces(lat, lng, 'police', '[amenity=police]|[destination~"police"]|[name~"^(Delegacia|Batalhão|UPP|DEAT|Polícia)"]');
         allPoints.push(...police);
         updateTable('police-list', police.filter(p => p.distance <= 15).sort((a, b) => a.distance - b.distance));
 
@@ -161,10 +160,6 @@ async function searchLocation() {
         allPoints.push(...locksmiths);
         updateTable('locksmith-list', locksmiths.filter(p => p.distance <= 15).sort((a, b) => a.distance - b.distance));
 
-        const mechanics = await fetchNearbyPlaces(lat, lng, 'mechanic', '[shop=car_repair]');
-        allPoints.push(...mechanics);
-        updateTable('mechanic-list', mechanics.filter(p => p.distance <= 15).sort((a, b) => a.distance - b.distance));
-
         // Adicionar marcadores ao mapa
         allPoints.forEach(point => {
             let color;
@@ -173,7 +168,6 @@ async function searchLocation() {
                 case 'police': color = 'blue'; break;
                 case 'firefighter': color = 'red'; break;
                 case 'locksmith': color = 'green'; break;
-                case 'mechanic': color = 'purple'; break;
                 default: color = 'black';
             }
             const marker = L.marker([point.lat, point.lng], { icon: createCustomIcon(color) }).addTo(map);
