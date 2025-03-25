@@ -8,7 +8,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 function createCustomIcon(color) {
     return L.divIcon({
         className: 'custom-icon',
-        html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>`,
+        html: `<div style="background-color:${color};width:20px;height:20px;border-radius:50%;border:2px solid white;"></div>`,
         iconSize: [20, 20],
         iconAnchor: [10, 10]
     });
@@ -36,14 +36,12 @@ async function getMainPointAddress(lat, lng) {
     const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
     try {
         const response = await fetch(nominatimUrl, {
-            headers: {
-                'User-Agent': 'MOVI SOS Dashboard (seu-email@exemplo.com)' // Substitua pelo seu email
-            }
+            headers: { 'User-Agent': 'MOVI SOS Dashboard (seu-email@exemplo.com)' }
         });
         const data = await response.json();
         return data.display_name || 'Endereço não encontrado';
     } catch (error) {
-        console.error('Erro ao buscar endereço do ponto principal:', error);
+        console.error('Erro ao buscar endereço:', error);
         return 'Erro ao buscar endereço';
     }
 }
@@ -71,12 +69,12 @@ async function fetchNearbyPlaces(lat, lng, type) {
             throw new Error(`Tipo desconhecido: ${type}`);
     }
 
-    console.log(`Query enviada para ${type}:`, query);
+    console.log(`Query para ${type}:`, query);
 
     try {
         const response = await fetch(overpassUrl, {
             method: 'POST',
-            body: `data=${encodeURIComponent(query)}`, // Enviar query como parâmetro 'data'
+            body: `data=${encodeURIComponent(query)}`,
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'User-Agent': 'MOVI SOS Dashboard (seu-email@exemplo.com)' // Substitua pelo seu email
@@ -84,7 +82,7 @@ async function fetchNearbyPlaces(lat, lng, type) {
         });
         if (!response.ok) {
             const errorText = await response.text();
-            console.error(`Resposta bruta da API para ${type}:`, errorText);
+            console.error(`Erro na API para ${type}:`, errorText);
             throw new Error(`Resposta da API não OK: ${response.status} - ${errorText}`);
         }
         const data = await response.json();
@@ -94,7 +92,6 @@ async function fetchNearbyPlaces(lat, lng, type) {
         return data.elements.map(element => {
             const pointLat = element.type === 'node' ? element.lat : element.center.lat;
             const pointLng = element.type === 'node' ? element.lon : element.center.lon;
-
             return {
                 type: type,
                 name: element.tags.name || 'Desconhecido',
@@ -120,9 +117,7 @@ function closeAddressBox() {
 function resetForm() {
     document.getElementById('coords').value = '';
     map.eachLayer(layer => {
-        if (layer instanceof L.Marker) {
-            map.removeLayer(layer);
-        }
+        if (layer instanceof L.Marker) map.removeLayer(layer);
     });
     document.getElementById('main-point-address').style.display = 'none';
     ['hospital-list', 'police-list', 'firefighter-list', 'locksmith-list'].forEach(id => {
@@ -137,7 +132,7 @@ async function searchLocation() {
     const coords = coordsInput.split(',').map(coord => parseFloat(coord.trim()));
     
     if (coords.length !== 2 || isNaN(coords[0]) || isNaN(coords[1])) {
-        alert('Por favor, insira coordenadas válidas no formato: latitude, longitude (ex.: -22.92048625354668, -43.17458379592426)');
+        alert('Por favor, insira coordenadas válidas no formato: latitude, longitude (ex.: -22.9068, -43.1729)');
         return;
     }
 
@@ -146,9 +141,7 @@ async function searchLocation() {
 
     // Limpar o mapa
     map.eachLayer(layer => {
-        if (layer instanceof L.Marker) {
-            map.removeLayer(layer);
-        }
+        if (layer instanceof L.Marker) map.removeLayer(layer);
     });
 
     // Centralizar o mapa na nova localização
@@ -163,7 +156,7 @@ async function searchLocation() {
     document.getElementById('main-point-address-text').textContent = address;
     addressBox.style.display = 'block';
 
-    // Buscar pontos de apoio sequencialmente com atraso
+    // Buscar pontos de apoio sequencialmente
     try {
         const allPoints = [];
 
@@ -197,15 +190,11 @@ async function searchLocation() {
                 default: color = 'black';
             }
             const marker = L.marker([point.lat, point.lng], { icon: createCustomIcon(color) }).addTo(map);
-            marker.bindPopup(`
-                <b>${point.name}</b><br>
-                Endereço: ${point.address}<br>
-                Telefone: ${point.phone}
-            `);
+            marker.bindPopup(`<b>${point.name}</b><br>Endereço: ${point.address}<br>Telefone: ${point.phone}`);
         });
 
     } catch (error) {
-        console.error('Erro detalhado ao buscar pontos de apoio:', error);
+        console.error('Erro ao buscar pontos de apoio:', error);
         alert(`Erro ao buscar pontos de apoio: ${error.message}. Verifique o console para mais detalhes.`);
     }
 }
@@ -214,7 +203,7 @@ async function searchLocation() {
 function updateTable(listId, points) {
     const list = document.getElementById(listId);
     if (!list) {
-        console.error(`Elemento com ID ${listId} não encontrado no DOM`);
+        console.error(`Elemento com ID ${listId} não encontrado`);
         return;
     }
     list.innerHTML = '';
