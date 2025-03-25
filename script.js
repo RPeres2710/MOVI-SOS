@@ -37,7 +37,7 @@ async function getMainPointAddress(lat, lng) {
     try {
         const response = await fetch(nominatimUrl, {
             headers: {
-                'User-Agent': 'MOVI SOS Dashboard (rperes0510@gmail.com)
+                'User-Agent': 'MOVI SOS Dashboard (seu-email@exemplo.com)' // Substitua pelo seu email
             }
         });
         const data = await response.json();
@@ -51,7 +51,7 @@ async function getMainPointAddress(lat, lng) {
 // Função para buscar lugares próximos usando a Overpass API
 async function fetchNearbyPlaces(lat, lng, type) {
     const radius = 15000; // em metros
-    const overpassUrl = `https://overpass-api.de/api/interpreter`;
+    const overpassUrl = 'https://overpass-api.de/api/interpreter';
 
     let query;
     switch (type) {
@@ -71,12 +71,12 @@ async function fetchNearbyPlaces(lat, lng, type) {
             throw new Error(`Tipo desconhecido: ${type}`);
     }
 
-    console.log(`Query enviada para ${type}:`, query); // Log para depuração
+    console.log(`Query enviada para ${type}:`, query);
 
     try {
         const response = await fetch(overpassUrl, {
             method: 'POST',
-            body: query,
+            body: `data=${encodeURIComponent(query)}`, // Enviar query como parâmetro 'data'
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'User-Agent': 'MOVI SOS Dashboard (seu-email@exemplo.com)' // Substitua pelo seu email
@@ -84,6 +84,7 @@ async function fetchNearbyPlaces(lat, lng, type) {
         });
         if (!response.ok) {
             const errorText = await response.text();
+            console.error(`Resposta bruta da API para ${type}:`, errorText);
             throw new Error(`Resposta da API não OK: ${response.status} - ${errorText}`);
         }
         const data = await response.json();
