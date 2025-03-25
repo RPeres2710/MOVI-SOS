@@ -37,7 +37,7 @@ async function getMainPointAddress(lat, lng) {
     try {
         const response = await fetch(nominatimUrl, {
             headers: {
-                'User-Agent': 'MOVI SOS Dashboard (seu-email@exemplo.com)' // Substitua pelo seu email
+                'User-Agent': 'MOVI SOS Dashboard (rperes0510@gmail.com)' 
             }
         });
         const data = await response.json();
