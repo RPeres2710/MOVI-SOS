@@ -56,69 +56,35 @@ async function fetchNearbyPlaces(lat, lng, type) {
     let query;
     switch (type) {
         case 'hospital':
-            query = `
-                [out:json];
-                (
-                    node(around:${radius},${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
-                    way(around:${radius},${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
-                    relation(around:${radius},${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];
-                );
-                out center 50;
-            `;
+            query = `[out:json];(node(around:${radius},${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];way(around:${radius},${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];relation(around:${radius},${lat},${lng})["amenity"="hospital"]["amenity"!="veterinary"];);out center 50;`;
             break;
         case 'police':
-            query = `
-                [out:json];
-                (
-                    node(around:${radius},${lat},${lng})["amenity"="police"];
-                    way(around:${radius},${lat},${lng})["amenity"="police"];
-                    relation(around:${radius},${lat},${lng})["amenity"="police"];
-                    node(around:${radius},${lat},${lng})["destination"~"police"];
-                    way(around:${radius},${lat},${lng})["destination"~"police"];
-                    relation(around:${radius},${lat},${lng})["destination"~"police"];
-                    node(around:${radius},${lat},${lng})["name"~"^(Delegacia|Batalhão|UPP|DEAT|Polícia)"];
-                    way(around:${radius},${lat},${lng})["name"~"^(Delegacia|Batalhão|UPP|DEAT|Polícia)"];
-                    relation(around:${radius},${lat},${lng})["name"~"^(Delegacia|Batalhão|UPP|DEAT|Polícia)"];
-                );
-                out center 50;
-            `;
+            query = `[out:json];(node(around:${radius},${lat},${lng})["amenity"="police"];way(around:${radius},${lat},${lng})["amenity"="police"];relation(around:${radius},${lat},${lng})["amenity"="police"];);out center 50;`;
             break;
         case 'firefighter':
-            query = `
-                [out:json];
-                (
-                    node(around:${radius},${lat},${lng})["amenity"="fire_station"];
-                    way(around:${radius},${lat},${lng})["amenity"="fire_station"];
-                    relation(around:${radius},${lat},${lng})["amenity"="fire_station"];
-                );
-                out center 50;
-            `;
+            query = `[out:json];(node(around:${radius},${lat},${lng})["amenity"="fire_station"];way(around:${radius},${lat},${lng})["amenity"="fire_station"];relation(around:${radius},${lat},${lng})["amenity"="fire_station"];);out center 50;`;
             break;
         case 'locksmith':
-            query = `
-                [out:json];
-                (
-                    node(around:${radius},${lat},${lng})["shop"="locksmith"];
-                    way(around:${radius},${lat},${lng})["shop"="locksmith"];
-                    relation(around:${radius},${lat},${lng})["shop"="locksmith"];
-                );
-                out center 50;
-            `;
+            query = `[out:json];(node(around:${radius},${lat},${lng})["shop"="locksmith"];way(around:${radius},${lat},${lng})["shop"="locksmith"];relation(around:${radius},${lat},${lng})["shop"="locksmith"];);out center 50;`;
             break;
         default:
             throw new Error(`Tipo desconhecido: ${type}`);
     }
+
+    console.log(`Query enviada para ${type}:`, query); // Log para depuração
 
     try {
         const response = await fetch(overpassUrl, {
             method: 'POST',
             body: query,
             headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
                 'User-Agent': 'MOVI SOS Dashboard (seu-email@exemplo.com)' // Substitua pelo seu email
             }
         });
         if (!response.ok) {
-            throw new Error(`Resposta da API não OK: ${response.status}`);
+            const errorText = await response.text();
+            throw new Error(`Resposta da API não OK: ${response.status} - ${errorText}`);
         }
         const data = await response.json();
 
