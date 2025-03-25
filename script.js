@@ -26,6 +26,11 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
     return R * c;
 }
 
+// Função para adicionar atraso entre requisições
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // Função para obter o endereço do ponto principal usando Nominatim
 async function getMainPointAddress(lat, lng) {
     const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
@@ -55,14 +60,20 @@ async function fetchNearbyPlaces(lat, lng, type, tags) {
             way(around:${radius},${lat},${lng})${tags};
             relation(around:${radius},${lat},${lng})${tags};
         );
-        out center 50; // Limite de 50 resultados por categoria
+        out center 50;
     `;
 
     try {
         const response = await fetch(overpassUrl, {
             method: 'POST',
-            body: query
+            body: query,
+            headers: {
+                'User-Agent': 'MOVI SOS Dashboard (seu-email@exemplo.com)' // Substitua pelo seu email
+            }
         });
+        if (!response.ok) {
+            throw new Error(`Resposta da API não OK: ${response.status}`);
+        }
         const data = await response.json();
 
         console.log(`Resultados para ${type}: ${data.elements.length} encontrados`, data.elements);
@@ -83,7 +94,7 @@ async function fetchNearbyPlaces(lat, lng, type, tags) {
         });
     } catch (error) {
         console.error(`Erro ao buscar ${type}:`, error);
-        return [];
+        throw error;
     }
 }
 
@@ -139,24 +150,31 @@ async function searchLocation() {
     document.getElementById('main-point-address-text').textContent = address;
     addressBox.style.display = 'block';
 
-    // Buscar pontos de apoio sequencialmente
+    // Buscar pontos de apoio sequencialmente com atraso
     try {
         const allPoints = [];
 
-        const hospitals = await fetchNearbyPlaces(lat, lng, 'hospital', '[amenity=hospital][amenity!=veterinary]');
+        const hospitals = await fetchNearbyPlaces(lat, lng, 'hospital', '["amenity"="hospital"]["amenity"!="veterinary"]');
         allPoints.push(...hospitals);
         updateTable('hospital-list', hospitals.filter(p => p.distance <= 15).sort((a, b) => a.distance - b.distance));
+        await delay(1000);
 
-        // Query ajustada para entidades de segurança da polícia
-        const police = await fetchNearbyPlaces(lat, lng, 'police', '[amenity=police]|[destination~"police"]|[name~"^(Delegacia|Batalhão|UPP|DEAT|Polícia)"]');
+        // Query corrigida para polícia
+        const police = await fetchNearbyPlaces(lat, lng, 'police', 
+            '["amenity"="police"]|' +
+            '["destination"~"police"]|' +
+            '["name"~"^(Delegacia|Batalhão|UPP|DEAT|Polícia)"]'
+        );
         allPoints.push(...police);
         updateTable('police-list', police.filter(p => p.distance <= 15).sort((a, b) => a.distance - b.distance));
+        await delay(1000);
 
-        const firefighters = await fetchNearbyPlaces(lat, lng, 'firefighter', '[amenity=fire_station]');
+        const firefighters = await fetchNearbyPlaces(lat, lng, 'firefighter', '["amenity"="fire_station"]');
         allPoints.push(...firefighters);
         updateTable('firefighter-list', firefighters.filter(p => p.distance <= 15).sort((a, b) => a.distance - b.distance));
+        await delay(1000);
 
-        const locksmiths = await fetchNearbyPlaces(lat, lng, 'locksmith', '[shop=locksmith]');
+        const locksmiths = await fetchNearbyPlaces(lat, lng, 'locksmith', '["shop"="locksmith"]');
         allPoints.push(...locksmiths);
         updateTable('locksmith-list', locksmiths.filter(p => p.distance <= 15).sort((a, b) => a.distance - b.distance));
 
@@ -179,14 +197,18 @@ async function searchLocation() {
         });
 
     } catch (error) {
-        console.error('Erro ao buscar pontos de apoio:', error);
-        alert('Erro ao buscar pontos de apoio. Verifique o console para mais detalhes.');
+        console.error('Erro detalhado ao buscar pontos de apoio:', error);
+        alert(`Erro ao buscar pontos de apoio: ${error.message}. Verifique o console para mais detalhes.`);
     }
 }
 
 // Função para atualizar a tabela
 function updateTable(listId, points) {
     const list = document.getElementById(listId);
+    if (!list) {
+        console.error(`Elemento com ID ${listId} não encontrado no DOM`);
+        return;
+    }
     list.innerHTML = '';
     if (points.length === 0) {
         list.innerHTML = '<li>Nenhum encontrado em 15 km</li>';
